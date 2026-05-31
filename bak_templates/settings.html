@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — App Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{min-height:100%; display:grid; place-items:center; padding:24px}
+    .card{width:min(520px, 92vw); background:#0b1220cc; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .title{font-weight:800; font-size:20px; margin-bottom:8px}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:16px; border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--surface); margin:6px 0}
+    .label{font-weight:700}
+    .muted{color:var(--muted); font-size:12px}
+    .switch{position:relative; width:52px; height:30px; border-radius:999px; background:#374151; border:1px solid var(--line); cursor:pointer}
+    .switch .dot{position:absolute; top:2px; left:2px; width:24px; height:24px; background:#fff; border-radius:999px; transition:left .2s ease}
+    .switch.on{background:#2563eb}
+    .switch.on .dot{left:26px}
+  
+
+
+/* Keep the caret tight to label */
+.tabs-top .dropdown .dropdown-btn::after{ content:''; }
+
+
+/* === Light theme (refined v3): stronger greys, no text pills === */
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --brand:#ffffff;
+  --surface:#ffffff;
+  --elev:#ffffff;
+  --line:#94a3b8;         /* darker separators */
+  --text:#0b1324;         /* primary text */
+  --muted:#334155;        /* secondary text */
+  --accent:#7c3aed;       /* purple */
+  --accent2:#2563eb;      /* blue */
+  --good:#047857;
+  --warn:#b45309;
+  --bad:#b91c1c;
+  --chip:#f8fafc;
+  --chip-border:#cbd5e1;
+  --rail-pending:#fee2e2;
+  --rail-progress:#dbeafe;
+  --rail-done:#dcfce7;
+  --sla-gray:#cbd5e1;
+}
+:root[data-theme="light"] body{
+  background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+  color:var(--text);
+}
+:root[data-theme="light"] .top{ 
+  background:#ffffffcc; 
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+/* Tabs */
+:root[data-theme="light"] .tabs-top .tab-top{ color:#334155 }
+:root[data-theme="light"] .tabs-top .tab-top.active{ color:#0b1324; border-bottom:2px solid var(--accent2) }
+/* Panels & lists */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .dropdown-menu,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row{
+  background:#ffffff;
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+:root[data-theme="light"] .list .row:hover{ background:#f8fafc }
+/* Remove "pills" around plain text in light mode */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:transparent;
+  border:0;
+  padding:0;
+  color:var(--muted);
+}
+/* Buttons: keep action buttons dark for contrast */
+:root[data-theme="light"] .btn{ 
+  background:#111827; 
+  color:#fff; 
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+/* Admin dropdown button: treat like a tab (handled by global rule above) */
+:root[data-theme="light"] .dropdown .dropdown-btn{
+  background:transparent; border:0; color:inherit;
+}
+/* Inputs */
+:root[data-theme="light"] .input, 
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus{
+  outline:2px solid var(--accent2); border-color:transparent;
+}
+/* Dropdown menu links */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* Links */
+:root[data-theme="light"] a{ color:#2563eb }
+/* Avatar initials */
+:root[data-theme="light"] .avatar{ color:#ffffff }
+/* Alerts */
+:root[data-theme="light"] .alert{ border-color:#fecaca; background:#fff5f5; color:#7f1d1d }
+
+
+/* === Light-mode tweaks: assigned text & read/unread pills === */
+:root[data-theme="light"] .assigned{ color:#334155 } /* darker secondary text */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
+
+
+
+/* === Header normalization (match index.html) === */
+:root{ --top-h:38px }
+
+.top .tabs-top .tab-top,
+.top .tabs-top .dropdown .dropdown-btn,
+.top .user .btn,
+.top .user .pill{
+  padding:8px 10px !important;
+  height:var(--top-h) !important;
+  line-height:calc(var(--top-h) - 16px) !important;
+  border-radius:8px !important;
+}
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  font-weight:700;
+  color:inherit;
+}
+
+/* Light header surface */
+:root[data-theme="light"] .top{
+  background:#ffffffcc;
+  border-bottom:1px solid var(--line);
+}
+
+
+/* === Unified Light Mode Surfaces === */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row,
+:root[data-theme="light"] .dropdown-menu{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+/* Inputs & form elements */
+:root[data-theme="light"] .input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus{
+  outline:2px solid var(--accent2);
+  border-color:transparent;
+}
+
+/* Pills & status chips */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Read/unread special cases */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; }
+:root[data-theme="light"] .readpill.is-read  { background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; }
+
+/* Buttons maintain contrast */
+:root[data-theme="light"] .btn{
+  background:#111827;
+  color:#ffffff;
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card" aria-label="App Settings">
+      <div class="title">App Settings</div>
+      <div class="row">
+        <div>
+          <div class="label">Theme</div>
+          <div class="muted">Toggle between Dark and Light mode.</div>
+        </div>
+        <button class="switch" id="themeSwitch" aria-pressed="false" aria-label="Toggle theme"><span class="dot"></span></button>
+      </div>
+      <div class="muted" style="margin-top:10px"><a href="{{ url_for('index') }}">← Back to Dashboard</a></div>
+    </section>
+  </main>
+  <script>
+  // Apply saved theme on load
+  (function(){
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    const sw = document.getElementById('themeSwitch');
+    if(saved==='light'){ sw?.classList.add('on'); sw?.setAttribute('aria-pressed','true'); }
+  })();
+  // Toggle
+  document.getElementById('themeSwitch')?.addEventListener('click', ()=>{
+    const sw = document.getElementById('themeSwitch');
+    const isOn = sw.classList.toggle('on');
+    const next = isOn ? 'light' : 'dark';
+    localStorage.setItem('theme', next);
+    document.documentElement.setAttribute('data-theme', next);
+  });
+  </script>
+<script>
+
+/* Normalize .readpill styling by text content across all pages */
+(function(){
+  function applyState(el){
+    const t = (el.textContent||'').trim().toLowerCase();
+    if(t === 'unread'){
+      el.classList.add('is-unread');
+      el.classList.remove('is-read');
+    }else if(t === 'read'){
+      el.classList.add('is-read');
+      el.classList.remove('is-unread');
+    }else{
+      el.classList.remove('is-read','is-unread');
+    }
+  }
+  function wire(el){
+    applyState(el);
+    const mo = new MutationObserver(()=>applyState(el));
+    mo.observe(el, {childList:true, characterData:true, subtree:true});
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.readpill').forEach(wire);
+  });
+})();
+
+</script>
+</body>
+</html>

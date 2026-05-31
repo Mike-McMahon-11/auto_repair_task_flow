@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Day End</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>:root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444; --dark:#0b1220;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020);
+      font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial;
+    }
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar (match Requests) */
+    .dropdown{position:relative}
+    .dropdown-btn{display:inline-flex; align-items:center; gap:6px}
+    .dropdown-menu{position:absolute; top:calc(100% + 6px); left:0; display:none; min-width:200px; padding:8px; background:var(--elev); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+    .tabs-top{display:flex; gap:8px}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:#cbd5e1; font-weight:700}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:#0f172a; border-radius:999px; color:#cbd5e1; font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+
+    /* Layout */
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px; display:grid; grid-template-columns:1fr 520px; gap:16px}
+    .panel{background:#0b1220aa; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:14px}
+
+    /* Left form */
+    h3{margin:0 0 10px}
+    label{display:block; margin:12px 0 6px; color:#cbd5e1; font-weight:700}
+    .input, textarea, select{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--elev); color:var(--text)}
+    input::placeholder, textarea::placeholder{color:#94a3b8}
+    .note{font-size:12px; color:#9ca3af; margin-top:4px}
+    .btn.primary{background:#2563eb; border-color:#2563eb}
+
+    /* Currency/percent adorners */
+    .affix{position:relative}
+    .affix input{padding-left:26px}
+    .affix .pre{position:absolute; left:8px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none}
+    .affix-suf{position:relative}
+    .affix-suf input{padding-right:26px}
+    .affix-suf .suf{position:absolute; right:8px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none}
+
+    /* Make date picker icon bright & visible in dark */
+    input[type="date"]{ color-scheme: dark; }
+    input[type="date"]::-webkit-calendar-picker-indicator{
+      filter: invert(1) brightness(2.4) contrast(1.2) saturate(1.1);
+      opacity: 1;
+    }
+
+    /* Right gauge area */
+    .rightwrap{position:relative; height:100%; display:grid; grid-template-rows:auto 1fr auto; gap:10px}
+    .tops{display:flex; justify-content:space-between; align-items:center}
+    .chip{background:#0e1628; border:1px solid var(--line); padding:8px 10px; border-radius:10px; font-weight:800}
+    .chip .sub{display:block; font-size:11px; color:#a3b2c6; margin-bottom:2px; font-weight:700}
+    .chip .val{font-size:18px}
+
+    .gauge-box{position:relative; display:grid; place-items:center; padding:10px}
+    .gauge{
+      --pct: {{ gauge_pct }};
+      position:relative; width:360px; height:360px; border-radius:50%;
+      background: conic-gradient(#22c55e calc(var(--pct) * 1%), #374151 0);
+    }
+    .gauge::after{
+      content:""; position:absolute; inset:38px; border-radius:50%; background:#111827; border:1px solid var(--line);
+      box-shadow:inset 0 0 20px rgba(0,0,0,.4);
+    }
+    .center{position:absolute; inset:0; display:grid; place-items:center; text-align:center}
+    .center .badge{
+      width:120px; height:120px; border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, #ef4444, #7f1d1d);
+      display:grid; place-items:center; color:#fff; font-weight:900; font-size:34px; box-shadow:0 0 30px rgba(239,68,68,.35) inset;
+      border:2px solid #1f2937;
+    }
+    .center .label{margin-top:8px; font-size:26px; font-weight:900}
+    .center .label small{display:block; font-size:22px}
+
+    /* NEW: Month bar centered under gauge */
+    .monthbar{
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .monthbtn{
+      width:44px; height:32px; border-radius:999px;
+      background:#1f2a44; border:1px solid #3b82f6; color:#fff; font-weight:900;
+      display:grid; place-items:center; cursor:pointer;
+      box-shadow:0 0 0 1px rgba(59,130,246,.25) inset;
+    }
+    .monthbtn:hover{filter:brightness(1.12)}
+    .monthpill{
+      background:#0f172a; border:1px solid var(--line); padding:6px 10px; border-radius:10px; font-weight:800; min-width:160px; text-align:center;
+    }
+
+    /* Bottom stats */
+    .bottom{display:flex; align-items:center; gap:12px; justify-content:space-between}
+    .tile{background:#0e1628; border:1px solid var(--line); padding:10px 12px; border-radius:12px; width:90px; text-align:center}
+    .tile .big{font-size:20px; font-weight:900}
+    .remain{flex:1; background:#0e1628; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+    .remain .hdr{padding:8px 10px; text-align:center; font-weight:900; border-bottom:1px solid var(--line)}
+    .remain .amt{padding:8px 10px; background:yellow; color:#111; text-align:center; font-weight:900}
+
+    /* Read-only KPIs under form */
+    .ro{margin-top:12px; display:grid; gap:10px}
+    .ro .grp{display:grid; gap:6px}
+    .ro .grp .input{background:#0e1628; color:#e5e7eb}
+
+    @media (max-width:1100px){ .wrap{grid-template-columns:1fr} .gauge{width:300px; height:300px} }
+
+
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --rail-pending:#ef444433; --rail-progress:#3b82f633; --rail-done:#10b98133;
+      --chip:#0b1220; --chip-border:#334155;
+      --sla-gray:#374151;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:#cbd5e1; position:relative; font-weight:700}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:#cbd5e1; font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+    .btn.black{background:#000; border-color:#000}
+    .btn.primary{border-color:#334155}
+    .btn.danger{border-color:#7f1d1d; color:#fecaca}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+
+    /* Subscription chip */
+    .sub-status{
+      display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip);
+      border-radius:999px; font-size:12px; color:#cbd5e1;
+    }
+    .sub-status .dot{ width:8px; height:8px; border-radius:50%; background:var(--good) }
+    .sub-status.warn .dot{ background:var(--warn) }
+
+    .ann{background:linear-gradient(90deg,#5b21b6,#7c3aed); color:#fff}
+    .ann .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; justify-content:space-between}
+
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{background:#0b1220aa; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:14px}
+
+    /* KPIs */
+    .kpis{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px}
+    .kpi{display:flex; flex-direction:column; gap:6px; cursor:default}
+    .kpi.clickable{cursor:pointer}
+    .kpi .label{color:var(--muted); font-size:12px}
+    .kpi .value{font-size:22px; font-weight:800}
+
+    /* Subtabs (Requests) */
+    .subtabs{display:flex; align-items:center; gap:18px; padding:0 6px; border-bottom:1px solid var(--line)}
+    .subtab{position:relative; padding:12px 2px; color:#cbd5e1; font-weight:800}
+    .subtab.active{color:#fff}
+    .subtab.active::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent2); border-radius:2px}
+    .badge{display:inline-block; margin-left:8px; padding:2px 8px; background:#1f2937; border-radius:999px; font-size:11px; color:#e5e7eb}
+
+    /* List / rows */
+    .list{display:flex; flex-direction:column; gap:10px; padding:12px 6px 0}
+    .row{position:relative; padding:12px 12px 12px 16px; border:1px solid var(--line); border-radius:12px; background:var(--elev); cursor:pointer}
+    .rail{position:absolute; left:-1px; top:-1px; bottom:-1px; width:6px; border-radius:12px 0 0 12px}
+    .rail.pending{background:var(--rail-pending); outline:1px solid #7f1d1d}
+    .rail.progress{background:var(--rail-progress); outline:1px solid #1e3a8a}
+    .rail.done{background:var(--rail-done); outline:1px solid #065f46}
+
+    .row-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px }
+    .left-cluster{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:230px }
+    .created{ font-size:12px; color:#cbd5e1; background:#0c1424; border:1px solid var(--line); border-radius:999px; padding:4px 8px }
+    .urgent-flag{ width:22px; text-align:center; font-size:16px; line-height:1; opacity:.9 }
+    .readpill{ font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:#0f172a; color:#e5e7eb }
+
+    .mid{ flex:1; min-width:0 }
+    .titleline{ font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .snippet{ color:#a3b2c6; font-weight:500 }
+    .assigned{ margin-top:4px; color:#cbd5e1 }
+
+    .right-cluster{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+    .sla{ font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:var(--sla-gray); color:#e5e7eb }
+    .sla.gray{ background:#0c1424; border-color:#1f2937; color:#cbd5e1 }
+    .sla.yellow{ background:rgba(245,158,11,.18); border-color:#92400e; color:#f59e0b }
+    .sla.orange{ background:rgba(234,88,12,.18); border-color:#9a3412; color:#fb923c }
+    .sla.red{ background:rgba(239,68,68,.18); border-color:#7f1d1d; color:#ef4444 }
+    .sla.done{ background:rgba(16,185,129,.15); border-color:#065f46; color:#10b981 }
+
+    .input, select, textarea{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--elev); color:var(--text)}
+    .btn.inline{ padding:6px 10px }
+
+    /* Inputs – visible placeholders in dark */
+    input::placeholder, textarea::placeholder { color:#94a3b8 }
+
+    /* Toggle slider */
+    .switch{ position:relative; display:inline-block; width:42px; height:24px; vertical-align:middle }
+    .switch input{ opacity:0; width:0; height:0 }
+    .slider{ position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#1f2937; border:1px solid var(--line); transition:.2s; border-radius:999px }
+    .slider:before{ position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#fff; transition:.2s; border-radius:50% }
+    .switch input:checked + .slider{ background:var(--accent2); border-color:var(--accent2) }
+    .switch input:checked + .slider:before{ transform:translateX(18px) }
+
+    .backdrop{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; place-items:center; z-index:60}
+    .sheet{width:min(520px,calc(100% - 40px)); background:var(--elev); border:1px solid var(--line); border-radius:14px; padding:16px}
+    .modal-backdrop{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.55); z-index:70 }
+    .modal{ width:min(640px,calc(100% - 40px)); background:var(--elev); border:1px solid var(--line); border-radius:14px; padding:16px }
+    .modal h3{ margin:0 0 12px }
+    .modal .body{ max-height:55vh; overflow:auto; color:#cbd5e1; }
+    .comment{ border:1px solid var(--line); background:#0f172a; border-radius:10px; padding:8px 10px }
+    .desc-label{ font-size:12px; font-weight:700; letter-spacing:.3px; color:#93c5fd; margin:0 0 6px; text-transform:uppercase; }
+    .desc-box{ background:#0b1a32; border:1px solid #1f3b67; color:#e5e7eb; padding:10px 12px; border-radius:10px; white-space:pre-wrap; }
+    #rdForm .input{ flex:1 }
+
+    @media (max-width:1200px){ .kpis{grid-template-columns:repeat(3,1fr)} .user{display:none} }
+    @media (max-width:700px){ .kpis{grid-template-columns:repeat(2,1fr)} .tabs-top{display:none} .left-cluster{min-width:160px} }
+  
+/* Avatar & profile dropdown */
+.avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none }
+.profile{ position:relative }
+.profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text) }
+.profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+.profile-menu.open{ display:flex }
+.profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+.profile-menu a:last-child{ border-bottom:none }
+.profile-menu a:hover{ background:var(--elev) }
+
+
+
+
+
+
+/* Keep the caret tight to label */
+.tabs-top .dropdown .dropdown-btn::after{ content:''; }
+
+
+/* === Light theme (refined v3): stronger greys, no text pills === */
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --brand:#ffffff;
+  --surface:#ffffff;
+  --elev:#ffffff;
+  --line:#94a3b8;         /* darker separators */
+  --text:#0b1324;         /* primary text */
+  --muted:#334155;        /* secondary text */
+  --accent:#7c3aed;       /* purple */
+  --accent2:#2563eb;      /* blue */
+  --good:#047857;
+  --warn:#b45309;
+  --bad:#b91c1c;
+  --chip:#f8fafc;
+  --chip-border:#cbd5e1;
+  --rail-pending:#fee2e2;
+  --rail-progress:#dbeafe;
+  --rail-done:#dcfce7;
+  --sla-gray:#cbd5e1;
+}
+:root[data-theme="light"] body{
+  background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+  color:var(--text);
+}
+:root[data-theme="light"] .top{ 
+  background:#ffffffcc; 
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+/* Tabs */
+:root[data-theme="light"] .tabs-top .tab-top{ color:#334155 }
+:root[data-theme="light"] .tabs-top .tab-top.active{ color:#0b1324; border-bottom:2px solid var(--accent2) }
+/* Panels & lists */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .dropdown-menu,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row{
+  background:#ffffff;
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+:root[data-theme="light"] .list .row:hover{ background:#f8fafc }
+/* Remove "pills" around plain text in light mode */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:transparent;
+  border:0;
+  padding:0;
+  color:var(--muted);
+}
+/* Buttons: keep action buttons dark for contrast */
+:root[data-theme="light"] .btn{ 
+  background:#111827; 
+  color:#fff; 
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+/* Admin dropdown button: treat like a tab (handled by global rule above) */
+:root[data-theme="light"] .dropdown .dropdown-btn{
+  background:transparent; border:0; color:inherit;
+}
+/* Inputs */
+:root[data-theme="light"] .input, 
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus{
+  outline:2px solid var(--accent2); border-color:transparent;
+}
+/* Dropdown menu links */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* Links */
+:root[data-theme="light"] a{ color:#2563eb }
+/* Avatar initials */
+:root[data-theme="light"] .avatar{ color:#ffffff }
+/* Alerts */
+:root[data-theme="light"] .alert{ border-color:#fecaca; background:#fff5f5; color:#7f1d1d }
+
+
+/* === Light-mode tweaks: assigned text & read/unread pills === */
+:root[data-theme="light"] .assigned{ color:#334155 } /* darker secondary text */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
+
+
+/* === Light-mode: preserve SLA colors & refine chips === */
+:root[data-theme="light"] .sla{
+  /* base: no background so colored states below can show */
+  background:transparent;
+  color:#0b1324;
+  border:1px solid #cbd5e1;
+}
+:root[data-theme="light"] .sla.gray{
+  background:#e2e8f0;      /* slate-200 */
+  color:#334155;           /* slate-700 */
+  border-color:#94a3b8;    /* slate-400 */
+}
+:root[data-theme="light"] .sla.yellow{
+  background:#fef3c7;      /* amber-100 */
+  color:#92400e;           /* amber-900 */
+  border-color:#f59e0b;    /* amber-500 */
+}
+:root[data-theme="light"] .sla.orange{
+  background:#ffedd5;      /* orange-100 */
+  color:#9a3412;           /* orange-900 */
+  border-color:#ea580c;    /* orange-600 */
+}
+:root[data-theme="light"] .sla.red{
+  background:#fee2e2;      /* red-100 */
+  color:#7f1d1d;           /* red-900 */
+  border-color:#dc2626;    /* red-600 */
+}
+:root[data-theme="light"] .sla.done{
+  background:#dcfce7;      /* emerald-100 */
+  color:#065f46;           /* emerald-900 */
+  border-color:#10b981;    /* emerald-500 */
+}
+
+/* Timestamp (initial time/date): no background, subtle grey text */
+:root[data-theme="light"] .created{
+  background:transparent;
+  border:0;
+  color:#64748b;           /* slate-500 */
+  padding:0;
+}
+
+/* Subtle comment history pill (like read/unread) */
+:root[data-theme="light"] .commentpill,
+:root[data-theme="light"] .comments-pill,
+:root[data-theme="light"] .commentsCount,
+:root[data-theme="light"] .comments-count{
+  background:#e0e7ff;      /* indigo-100 */
+  color:#1e3a8a;           /* indigo-900 */
+  border:1px solid #c7d2fe;/* indigo-200 */
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Assigned text: keep darker for readability */
+:root[data-theme="light"] .assigned{ color:#334155 }
+
+
+/* Header consistency: Admin dropdown matches other header buttons */
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:8px;
+  padding:8px 10px;
+  font-weight:700;
+  color:inherit;
+}
+.tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(0,0,0,0.06);
+}
+:root[data-theme="dark"] .tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(255,255,255,0.06);
+}
+
+
+/* Center header tab text */
+.tabs-top .tab-top{ display:inline-flex; align-items:center; justify-content:center; line-height:1.1 }
+
+
+/* Day-end: light mode polish */
+:root[data-theme="light"] .btn{ background:#ffffff; color:#0f172a; border:1px solid #cbd5e1 }
+:root[data-theme="light"] .btn.primary{ background:#111827; color:#ffffff; border-color:#111827 }
+:root[data-theme="light"] .pill{ background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1 }
+:root[data-theme="light"] .monthbtn{ background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; box-shadow:none }
+:root[data-theme="light"] .monthbtn:hover{ background:#f8fafc }
+:root[data-theme="light"] .monthpill{ background:#f8fafc; color:#334155; border:1px solid #cbd5e1 }
+:root[data-theme="light"] .chip{ background:#ffffff; border:1px solid #cbd5e1; color:#0f172a }
+:root[data-theme="light"] .gauge{ background: conic-gradient(#16a34a calc(var(--pct) * 1%), #e5e7eb 0) }
+
+
+/* === Compact header tabs === */
+.tabs-top .tab-top{
+  padding:4px 10px !important;
+  line-height:1.15 !important;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:10px;
+}
+.tabs-top .dropdown .dropdown-btn{
+  padding:4px 10px !important;
+  line-height:1.15 !important;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:10px;
+}
+
+
+
+/* === Header normalization (match index.html) === */
+:root{ --top-h:38px }
+
+.top .tabs-top .tab-top,
+.top .tabs-top .dropdown .dropdown-btn,
+.top .user .btn,
+.top .user .pill{
+  padding:8px 10px !important;
+  height:var(--top-h) !important;
+  line-height:calc(var(--top-h) - 16px) !important;
+  border-radius:8px !important;
+}
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  font-weight:700;
+  color:inherit;
+}
+
+/* Light header surface */
+:root[data-theme="light"] .top{
+  background:#ffffffcc;
+  border-bottom:1px solid var(--line);
+}
+
+
+/* === Unified Light Mode Surfaces === */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row,
+:root[data-theme="light"] .dropdown-menu{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+/* Inputs & form elements */
+:root[data-theme="light"] .input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus{
+  outline:2px solid var(--accent2);
+  border-color:transparent;
+}
+
+/* Pills & status chips */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Read/unread special cases */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; }
+:root[data-theme="light"] .readpill.is-read  { background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; }
+
+/* Buttons maintain contrast */
+:root[data-theme="light"] .btn{
+  background:#111827;
+  color:#ffffff;
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" {{ 'active' if current_page in ['recycle','admin_daily','admin_day_end','admin_reports','admin_vendor','admin_team'] else '' }} id="adminDropdown">
+          <button class="btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem">Team</a>
+                      <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+{% if current_user.is_authenticated %}
+<div class="profile">
+  <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+    <div class="avatar" data-name="{{ current_user.username }}"></div>
+  </button>
+  <div class="profile-menu" id="profileMenu" role="menu">
+    <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+    <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+    <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+  </div>
+</div>
+{% else %}
+<a class="btn" href="{{ url_for('login') }}">Login</a>
+{% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- LEFT: Daily Reporting -->
+    <section class="panel">
+      <h3>Daily Reporting</h3>
+      <form method="post" action="{{ url_for('admin_day_end') }}">
+        <!-- Report Date -->
+        <label for="date">Report Date</label>
+        <input class="input" id="date" type="date" name="date" value="{{ date_iso }}" />
+
+        <!-- Actual Closed -->
+        <label for="actual_closed">Actual Closed</label>
+        <div class="affix">
+          <span class="pre">$</span>
+          <input class="input" id="actual_closed" name="actual_closed" type="number" step="1" min="0" placeholder="0" value="{{ report.actual_closed if report else '' }}" />
+        </div>
+
+        <!-- Tomorrow Close Goal -->
+        <label for="tomorrow_close_goal">Tomorrow's Close Goal</label>
+        <div class="affix">
+          <span class="pre">$</span>
+          <input class="input" id="tomorrow_close_goal" name="tomorrow_close_goal" type="number" step="1" min="0" placeholder="0" value="{{ report.tomorrow_close_goal if report else '' }}" />
+        </div>
+
+        <!-- Daily GP -->
+        <label for="daily_gp">Daily GP</label>
+        <div class="affix-suf">
+          <input class="input" id="daily_gp" name="daily_gp" type="number" step="1" min="0" max="100" placeholder="0" value="{{ report.daily_gp if report else '' }}" />
+          <span class="suf">%</span>
+        </div>
+        <div class="note">Enter value between 0–100</div>
+
+        <div style="margin-top:12px">
+          <button class="btn primary" type="submit" name="action" value="save" style="width:100%">Submit Report</button>
+        </div>
+
+        <!-- Read-only computed boxes -->
+        <div class="ro">
+          <div class="grp">
+            <label>Today's Goal</label>
+            <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_goal }}" readonly /></div>
+          </div>
+          <div class="grp">
+            <label>Today's Variance</label>
+            <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_variance }}" readonly /></div>
+          </div>
+          <div class="grp">
+            <label>Monthly Variance</label>
+            <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ monthly_variance }}" readonly /></div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- RIGHT: Gauge + Stats -->
+    <aside class="panel rightwrap">
+      <div class="tops">
+        <div class="chip">
+          <span class="sub">Mo. Close Goal</span>
+          <span class="val">${{ "{:,}".format(mo_goal or 0) }}</span>
+        </div>
+        <div class="chip">
+          <span class="sub">Actual</span>
+          <span class="val">${{ "{:,}".format(mtd_actual or 0) }}</span>
+        </div>
+      </div>
+
+      <div class="gauge-box">
+        <div class="gauge"></div>
+
+        <!-- Center readout -->
+        <div class="center">
+          <div>
+            <div class="badge">{{ days_behind }}</div>
+            <div class="label"><small>Days</small>Behind</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: centered month bar under the gauge -->
+      <div class="monthbar">
+        <button class="monthbtn" type="button" aria-label="Previous month" onclick="goMonth(-1)">‹</button>
+        <div class="monthpill" id="monthLabel">{{ month_label }}</div>
+        <button class="monthbtn" type="button" aria-label="Next month" onclick="goMonth(1)">›</button>
+      </div>
+
+      <div class="bottom">
+        <div class="tile">
+          <div style="font-weight:800; color:#a3b2c6">Work Days</div>
+          <div class="big">{{ workdays }}</div>
+        </div>
+
+        <div class="remain">
+          <div class="hdr">Remaining to Close</div>
+          <div class="amt">${{ "{:,}".format(remaining_to_close or 0) }}</div>
+        </div>
+
+        <div class="tile">
+          <div style="font-weight:800; color:#a3b2c6">Missed</div>
+          <div class="big">{{ missed_days }}</div>
+        </div>
+
+        <div class="tile">
+          <div style="font-weight:800; color:#a3b2c6">Days Left</div>
+          <div class="big">{{ days_left }}</div>
+        </div>
+      </div>
+
+      <!-- MONTHLY PROGRESS CHART (moved to bottom of right panel) -->
+      <section class="panel" style="grid-column:1 / -1; margin-top:8px">
+        <h3 style="margin:0 0 10px">Monthly Progress</h3>
+        <div style="height:320px">
+          <canvas id="progressChart" aria-label="Monthly progress chart" role="img"></canvas>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Load Chart.js in its own tag -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // Auto shop switch
+    const shopSel = document.getElementById('shopSelect');
+    const shopForm = document.getElementById('shopSwitchForm');
+    shopSel?.addEventListener('change', () => shopForm?.submit());
+
+    // Month navigation (changes ?date= to the 1st of prev/next month)
+    function ymd(d){
+      const m=(d.getMonth()+1).toString().padStart(2,'0');
+      const day='01';
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+    function goMonth(delta){
+      const base = new Date("{{ date_iso }}T00:00:00");
+      base.setMonth(base.getMonth()+delta);
+      base.setDate(1);
+      const url = new URL(window.location.href);
+      url.searchParams.set('date', ymd(base));
+      window.location.href = url.toString();
+    }
+
+    (function(){
+      const labels = {{ chart_labels|tojson }};
+      const actual = {{ chart_actual_cum|tojson }};
+      const goal   = {{ chart_goal_cum|tojson }};
+
+      const canvas = document.getElementById('progressChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Actual',
+              data: actual,
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 0
+            },
+            {
+              label: 'Goal',
+              data: goal,
+              borderWidth: 2,
+              borderDash: [6,6],
+              tension: 0.3,
+              pointRadius: 0,
+              borderColor: '#f59e0b' // ← yellow
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#cbd5e1', font: { weight: '700' } }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: {
+              grid: { color: '#1f2937' },
+              ticks: { color: '#cbd5e1' }
+            },
+            y: {
+              grid: { color: '#1f2937' },
+              ticks: {
+                color: '#cbd5e1',
+                callback: (v)=>'$' + v.toLocaleString()
+              }
+            }
+          },
+          elements: {
+            line: { borderColor: ['#38bdf8','#93c5fd'] },
+            point: { backgroundColor: '#e5e7eb' }
+          }
+        }
+      });
+    })();
+
+  </script>
+<script>
+    // Admin dropdown behavior (added non-intrusively)
+    (function(){
+      const adminBtn = document.getElementById('adminBtn');
+      const adminMenu = document.getElementById('adminMenu');
+      const adminDropdown = document.getElementById('adminDropdown');
+      function closeAdmin(){
+        adminMenu?.classList.remove('open');
+        adminBtn?.setAttribute('aria-expanded','false');
+      }
+      adminBtn?.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const open = !adminMenu.classList.contains('open');
+        adminMenu.classList.toggle('open', open);
+        adminBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', (e)=>{
+        if(adminDropdown && !adminDropdown.contains(e.target)){ closeAdmin(); }
+      });
+      document.addEventListener('keydown', (e)=>{
+        if(e.key==='Escape') closeAdmin();
+      });
+    })();
+  </script>
+<script>
+    // Auto shop switch (admin)
+    const shopSel = document.getElementById('shopSelect');
+    const shopForm = document.getElementById('shopSwitchForm');
+    shopSel?.addEventListener('change', () => shopForm?.submit());
+
+    // Admin dropdown open/close
+    const adminBtn = document.getElementById('adminBtn');
+    const adminMenu = document.getElementById('adminMenu');
+    adminBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      adminMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!adminMenu?.contains(e.target) && e.target !== adminBtn) {
+        adminMenu?.classList.remove('open');
+      }
+    });
+
+    // Create sheet
+    const openCreate = document.getElementById('openCreate');
+    const createBackdrop = document.getElementById('createBackdrop');
+    const closeCreate = document.getElementById('closeCreate');
+    openCreate?.addEventListener('click', () => { createBackdrop.style.display = 'grid'; });
+    closeCreate?.addEventListener('click', () => { createBackdrop.style.display = 'none'; });
+
+    // Goal sheet
+    const kpiRemaining = document.getElementById('kpiRemaining');
+    const goalBackdrop = document.getElementById('goalBackdrop');
+    const closeGoal = document.getElementById('closeGoal');
+    kpiRemaining?.addEventListener('click', () => { goalBackdrop.style.display = 'grid'; });
+    closeGoal?.addEventListener('click', () => { goalBackdrop.style.display = 'none'; });
+
+    // Minute-fidelity elapsed pill with colors
+    function formatElapsed(ms){
+      const mins = Math.floor(ms / 60000);
+      if (mins < 60) return `${mins}m`;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m ? `${h}h ${m}m` : `${h}h`;
+    }
+    function classifyElapsed(el){
+      const status = (el.dataset.status || '').toLowerCase();
+      if (status === 'done') {
+        el.className = 'sla done';
+        el.textContent = 'Complete';
+        el.title = 'Completed';
+        return;
+      }
+      const created = new Date(el.dataset.created);
+      const deltaMs = Date.now() - created.getTime();
+      const mins = Math.floor(deltaMs / 60000);
+      el.classList.remove('gray','yellow','orange','red','done');
+      if (mins < 10) el.classList.add('gray');
+      else if (mins < 30) el.classList.add('yellow');
+      else if (mins < 60) el.classList.add('orange');
+      else el.classList.add('red');
+      el.classList.add('sla');
+      el.textContent = formatElapsed(deltaMs);
+      el.title = `Created ${formatElapsed(deltaMs)} ago`;
+    }
+    function updateAllElapsed(){ document.querySelectorAll('.sla').forEach(classifyElapsed); }
+    updateAllElapsed();
+    setInterval(updateAllElapsed, 60000);
+
+    // Request Details modal + mark-as-read
+    const rdBackdrop = document.getElementById('rdBackdrop');
+    const rdTitle    = document.getElementById('rdTitle');
+    const rdDesc     = document.getElementById('rdDesc');
+    const rdComments = document.getElementById('rdComments');
+    const rdClose    = document.getElementById('rdClose');
+
+    function openRequestDetails(row) {
+      const id = row.getAttribute('data-task-id');
+      const title = row.getAttribute('data-title');
+      const descSpan = row.querySelector('[data-desc]');
+      const commentsSpan = row.querySelector('[data-comments]');
+
+      rdTitle.textContent = title || 'Request';
+      rdDesc.textContent  = descSpan ? descSpan.textContent : '—';
+      rdComments.innerHTML = '';
+      if (commentsSpan) {
+        const c = document.createElement('div');
+        c.className = 'comment';
+        c.textContent = commentsSpan.textContent;
+        rdComments.appendChild(c);
+      }
+
+      fetch(`{{ url_for('mark_task_read', task_id=0) }}`.replace('0', id), {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'fetch' }
+      }).then(() => {
+        const pill = row.querySelector('.readpill');
+        if (pill) pill.textContent = 'Read';
+      }).catch(() => {});
+
+      rdBackdrop.style.display = 'grid';
+    }
+    rdClose?.addEventListener('click', () => { rdBackdrop.style.display = 'none'; });
+    rdBackdrop?.addEventListener('click', (e) => { if (e.target === rdBackdrop) rdBackdrop.style.display = 'none'; });
+
+    document.querySelectorAll('.row').forEach(row => {
+      row.addEventListener('click', () => openRequestDetails(row));
+    });
+  </script>
+<script>
+
+// Theme bootstrap
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved==='light' || saved==='dark'){
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
+
+// Avatar helpers (same as Team page)
+function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+function nameToInitials(s){
+  if(!s) return '??';
+  const parts = String(s).trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '??';
+  if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+  return (parts[0][0]||'?').toUpperCase() + (parts[1][0]||'?').toUpperCase();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.avatar').forEach(el=>{
+    const name = el.getAttribute('data-name') || el.textContent || '';
+    el.textContent = nameToInitials(name);
+    const hue = Math.abs(strHash(name)) % 360;
+    el.style.background = `hsl(${hue} 60% 35%)`;
+  });
+
+  // Profile dropdown wiring
+  const pBtn = document.getElementById('profileBtn');
+  const pMenu = document.getElementById('profileMenu');
+  pBtn?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    pMenu?.classList.toggle('open');
+    pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+  });
+  document.addEventListener('click', (e)=>{
+    if(!pMenu) return;
+    if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+      pMenu.classList.remove('open');
+      pBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+});
+
+</script>
+<script>
+
+/* Normalize .readpill styling by text content across all pages */
+(function(){
+  function applyState(el){
+    const t = (el.textContent||'').trim().toLowerCase();
+    if(t === 'unread'){
+      el.classList.add('is-unread');
+      el.classList.remove('is-read');
+    }else if(t === 'read'){
+      el.classList.add('is-read');
+      el.classList.remove('is-unread');
+    }else{
+      el.classList.remove('is-read','is-unread');
+    }
+  }
+  function wire(el){
+    applyState(el);
+    const mo = new MutationObserver(()=>applyState(el));
+    mo.observe(el, {childList:true, characterData:true, subtree:true});
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.readpill').forEach(wire);
+  });
+})();
+
+</script>
+</body>
+</html>

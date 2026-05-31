@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Vendor Approvals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+      --top-h:42px; --top-pad:6px 10px; --top-radius:10px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* --- Top bar (identical to Reports/Daily Updates) --- */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .top .inner > *:is(.logo, .tabs-top, .user){ height:var(--top-h); display:flex; align-items:center }
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:#cbd5e1; position:relative; font-weight:700; display:inline-flex; align-items:center; height:calc(var(--top-h) - 6px)}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:#cbd5e1; font-size:12px; height:calc(var(--top-h) - 6px)}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:6px 10px; border-radius:10px; font-weight:700; height:calc(var(--top-h) - 6px)}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:transparent; border:0; color:inherit; padding:6px 10px; border-radius:10px; height:calc(var(--top-h) - 6px)}
+    .dropdown-btn:hover{ background:rgba(255,255,255,0.06) }
+    :root[data-theme="light"] .dropdown-btn:hover{ background:rgba(0,0,0,0.06) }
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+
+    /* Subscription pill */
+    .sub-status{
+      display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip);
+      border-radius:999px; font-size:12px; color:#cbd5e1; height:calc(var(--top-h) - 6px)
+    }
+    .sub-status .dot{ width:8px; height:8px; border-radius:50%; background:var(--good) }
+    .sub-status.warn .dot{ background:var(--warn) }
+
+    /* Avatar & profile dropdown */
+    .avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; color:#fff; letter-spacing:.5px; user-select:none }
+    .profile{ position:relative }
+    .profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text); height:calc(var(--top-h) - 6px) }
+    .profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+    .profile-menu.open{ display:flex }
+    .profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+    .profile-menu a:last-child{ border-bottom:none }
+    .profile-menu a:hover{ background:var(--elev) }
+
+    /* Page */
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{background:var(--elev)/* patched from dark translucency */; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:16px}
+    .grid{display:grid; grid-template-columns: 2fr 1fr; gap:12px}
+    .input,select,textarea{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+    .btn.primary{background:#2563eb; border-color:#2563eb; color:#fff}
+    .badge{padding:2px 8px; border-radius:999px; border:1px solid var(--line)}
+
+    /* Vendor list */
+    .list{display:flex; flex-direction:column; gap:10px}
+    .row{display:flex; align-items:flex-start; gap:12px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+    .row .meta{flex:1}
+    .row .actions{display:flex; gap:8px}
+
+    /* Light theme */
+    :root[data-theme="light"]{
+      --bg:#f6f7fb; --brand:#ffffff; --surface:#ffffff; --elev:#ffffff; --line:#94a3b8; --text:#0b1324; --muted:#334155; --accent:#7c3aed; --accent2:#2563eb;
+      --chip:#f8fafc; --chip-border:#cbd5e1;
+    }
+    :root[data-theme="light"] body{ background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:var(--text)}
+    :root[data-theme="light"] .panel, :root[data-theme="light"] .row{ background:#fff; border:1px solid var(--line); box-shadow:0 10px 28px rgba(15,23,42,.08) }
+    :root[data-theme="light"] .pill{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1 }
+    :root[data-theme="light"] .btn{ background:#111827; color:#fff; border:1px solid #111827 }
+  
+    /* --- Vendor Approvals sub-tabs --- */
+    .subtabs{ display:flex; gap:8px; margin:10px 0 16px; }
+    .subtab{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border:1px solid var(--line); background:var(--elev);
+      border-radius:999px; font-weight:700; color:#cbd5e1; text-decoration:none;
+    }
+    .subtab.active{ outline:2px solid var(--accent2); color:#fff }
+
+  
+:root[data-theme="light"] input[type="date"]{ color-scheme: light; }
+</style>
+<style>
+
+/* === Index-aligned Light Mode Overrides === */
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .user .btn,
+:root[data-theme="light"] .top .btn{
+  background:#111827; color:#ffffff; border:1px solid #111827;
+}
+:root[data-theme="light"] .tabs-top .tab-top{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .tabs-top .tab-top.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+:root[data-theme="light"] .dropdown .dropdown-btn,
+:root[data-theme="light"] .profile-btn{
+  color:var(--text);
+}
+/* Subtabs (where present) */
+:root[data-theme="light"] .subtabs .subtab{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .subtabs .subtab.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+/* Ensure header pills and plan chip are readable */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  color:#334155;
+}
+/* Keep dropdown menus readable */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* === End Index-aligned Light Mode Overrides === */
+
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="dropdown tab-top" id="adminDropdown">
+          <button class="dropdown-btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a class="{{ 'active' if current_page=='admin_vendor' else '' }}" href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem">Team</a>
+            <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+                      <a href="{{ url_for('admin_vendors') }}" role="menuitem">Vendors</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set plan = (current_user.plan or 'free')|lower %}
+        {% set is_pro = current_user.is_authenticated and (plan != 'free') %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Sub-tabs for Vendor section -->
+    <nav class="subtabs" aria-label="Vendor section tabs">
+      <a class="subtab {% if current_page in ('admin_vendor','admin_vendor_approvals') %}active{% endif %}" href="{{ url_for('admin_vendor_approvals') }}">Approvals</a>
+      <a class="subtab {% if current_page == 'admin_vendors' %}active{% endif %}" href="{{ url_for('admin_vendors') }}">Vendors</a>
+    </nav>
+
+    <div class="grid">
+      <section class="panel">
+        <h2 style="margin:0 0 10px">Submit Vendor Approval</h2>
+        <form method="post" action="{{ url_for('admin_vendor_approvals') }}">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <div><label>Name</label><input class="input" name="name" required placeholder="Vendor name"></div>
+            <div><label>Service Type</label><select class="input" name="service_type" required>
+  <option value="" disabled selected>Select a service type</option>
+  <option>Glass</option>
+  <option>Striping</option>
+  <option>Sensor</option>
+  <option>Alignment</option>
+  <option>Misc</option>
+</select></div>
+            <div><label>Address</label><input class="input" name="address" placeholder="123 Main St..."></div>
+            <div><label>Phone</label><input class="input" name="phone" placeholder="(555) 555-5555" id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" required pattern="\(\d{3}\) \d{3}-\d{4}"></div>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end">
+            <button class="btn" type="reset">Clear</button>
+            <button class="btn primary" type="submit">Create</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2 style="margin:0 0 10px">Approvals</h2>
+        {% if approvals and approvals|length > 0 %}
+          <div class="list">
+            {% for t in approvals %}
+              <div class="row" data-approval-id="{{ t.id }}">
+                <div class="meta">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                    <strong style="font-size:16px">{{ t.vendor_name or t.title or 'Vendor' }}</strong>
+                    <span class="badge">Status: {{ t.status|capitalize }}</span>
+                    <span class="badge">Created: {{ (t.created_at or '') }}</span>
+                  </div>
+                  {% if t.description %}
+                    <div style="margin-top:6px; color:#cbd5e1; white-space:pre-wrap">{{ t.description }}</div>
+                  {% endif %}
+                </div>
+                <div class="actions">
+  <button type="button" class="btn" data-decide="approved" data-endpoint="{{ url_for('admin_vendor_decide', task_id=t.id) }}">Accept</button>
+  <button type="button" class="btn" data-decide="denied"   data-endpoint="{{ url_for('admin_vendor_decide', task_id=t.id) }}">Deny</button>
+</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color:var(--muted)">No approvals yet.</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+
+  <script>
+    
+      // Shop switcher
+      document.getElementById('shopSelect')?.addEventListener('change', ()=>{ document.getElementById('shopSwitchForm')?.submit(); });
+
+      // Avatar initials + stable color
+      const av = document.querySelector('.avatar[data-name]');
+      if (av){
+        const name = (av.getAttribute('data-name')||'').trim();
+        const parts = name.split(/\s+/);
+        const initials = (parts[0]?.[0]||'').toUpperCase() + (parts[1]?.[0]||'').toUpperCase();
+        av.textContent = initials || (name[0]||'U').toUpperCase();
+        let hash=0; for(let i=0;i<name.length;i++){ hash=((hash<<5)-hash)+name.charCodeAt(i); hash|=0; }
+        const hue = Math.abs(hash)%360;
+        av.style.background = `hsl(${hue} 70% 45%)`;
+      }
+
+      // Profile menu
+      const profileBtn = document.getElementById('profileBtn');
+      const profileMenu = document.getElementById('profileMenu');
+      profileBtn?.addEventListener('click', (e)=>{ e.preventDefault(); profileMenu?.classList.toggle('open'); });
+      document.addEventListener('click', (e)=>{ if(!e.target.closest('.profile')) profileMenu?.classList.remove('open'); });
+
+  </script>
+
+<script>
+// Delegated handler for Approve/Deny buttons
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-decide]');
+  if (!btn) return;
+  e.preventDefault();
+  const pane = btn.closest('[data-approval-id]');
+  const url = btn.getAttribute('data-endpoint') || (pane ? `/admin/vendor/${pane.getAttribute('data-approval-id')}/decide` : '');
+  const decision = btn.getAttribute('data-decide');
+  if (!pane || !url || !decision) return;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'fetch',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({ decision }).toString()
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // Remove the whole panel
+    pane.remove();
+  } catch (err) {
+    console.error(err);
+    alert('Unable to update this request right now.');
+  }
+});
+</script>
+
+
+<script>
+
+// Phone mask: clean typing (XXX) XXX-XXXX
+(function(){
+  const phone = document.getElementById('phone');
+  if (!phone) return;
+
+  function formatPhone(val) {
+    const nums = val.replace(/\D/g, '').slice(0, 10);
+    let out = '';
+    if (nums.length > 0) out = '(' + nums.slice(0,3);
+    if (nums.length >= 4) out += ') ' + nums.slice(3,6);
+    if (nums.length >= 7) out += '-' + nums.slice(6,10);
+    return out;
+  }
+
+  phone.addEventListener('input', () => {
+    const pos = phone.selectionStart;
+    phone.value = formatPhone(phone.value);
+    // keep caret at end for simplicity
+    phone.setSelectionRange(phone.value.length, phone.value.length);
+  });
+
+  phone.addEventListener('blur', () => {
+    phone.value = formatPhone(phone.value);
+  });
+
+  const form = phone.closest('form');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      phone.value = formatPhone(phone.value);
+      const valid = /^\(\d{3}\) \d{3}-\d{4}$/.test(phone.value);
+      if (!valid) {
+        e.preventDefault();
+        phone.reportValidity ?
+          phone.setCustomValidity('Enter as (XXX) XXX-XXXX') :
+          alert('Please enter as (XXX) XXX-XXXX');
+        phone.reportValidity?.();
+        phone.setCustomValidity('');
+      }
+    });
+  }
+})();
+</script>
+
+
+<script>
+// Ensure page theme matches saved preference
+(() => {
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch(e) { /* ignore */ }
+})();
+</script>
+
+
+<script>
+
+// Avatar helpers + Profile dropdown
+function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+function nameToInitials(s){
+  if(!s) return '??';
+  const parts = String(s).trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '??';
+  if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
+function initAvatars(){
+  document.querySelectorAll('.avatar').forEach(el=>{
+    const name = el.getAttribute('data-name') || el.textContent || '';
+    el.textContent = nameToInitials(name);
+    const hue = Math.abs(strHash(name)) % 360;
+    el.style.background = `hsl(${hue} 60% 35%)`;
+  });
+}
+document.addEventListener('DOMContentLoaded', initAvatars);
+
+const pBtn = document.getElementById('profileBtn');
+const pMenu = document.getElementById('profileMenu');
+pBtn?.addEventListener('click', (e)=>{
+  e.preventDefault();
+  pMenu?.classList.toggle('open');
+  pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+});
+document.addEventListener('click', (e)=>{
+  if(!pMenu) return;
+  if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+    pMenu.classList.remove('open');
+    pBtn?.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
+
+
+<script>
+  // Unified Admin dropdown behavior (shared across all admin pages)
+  document.addEventListener('DOMContentLoaded', function () {
+    var adminBtn  = document.getElementById('adminBtn');
+    var adminMenu = document.getElementById('adminMenu');
+
+    if (adminBtn && adminMenu) {
+      // Toggle on button click
+      adminBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        var isOpen = adminMenu.classList.toggle('open');
+        adminBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      // Close when clicking outside
+      document.addEventListener('click', function (e) {
+        var clickedInsideMenu   = adminMenu.contains(e.target);
+        var clickedAdminButton  = (e.target === adminBtn);
+
+        if (!clickedInsideMenu && !clickedAdminButton) {
+          adminMenu.classList.remove('open');
+          adminBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  });
+</script>
+
+
+</body>
+</html>

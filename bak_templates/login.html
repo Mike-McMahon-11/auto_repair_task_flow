@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TaskFlow — Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020);
+      font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial
+    }
+    a{color:inherit; text-decoration:none}
+
+    .wrap{
+      min-height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+
+    .card{
+      width:min(420px, 92vw);
+      background:#0b1220cc;
+      backdrop-filter: blur(8px);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+
+    .logo{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      margin-bottom:10px; font-weight:800; letter-spacing:.2px;
+    }
+    .logo .mark{
+      padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--brand);
+    }
+
+    .subtitle{ color:var(--muted); text-align:center; margin-bottom:16px }
+
+    .alert{
+      border:1px solid #7f1d1d; background:#2a0f0f; color:#fecaca;
+      padding:10px 12px; border-radius:10px; margin-bottom:12px; font-size:13px;
+    }
+
+    label{display:block; margin:10px 0 6px; color:#cbd5e1; font-weight:600}
+    .input{width:100%; padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+    .input:focus{outline:2px solid var(--accent2); border-color:transparent}
+
+    .password-wrapper{ position:relative }
+    .toggle-password{
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      cursor:pointer; user-select:none; width:22px; height:22px;
+      display:grid; place-items:center;
+    }
+    .toggle-password svg{ display:block; fill:#8aa; stroke:#8aa }
+    .toggle-password:hover svg{ fill:#cfe; stroke:#cfe }
+
+    .row{display:flex; align-items:center; justify-content:space-between; margin-top:10px}
+    .links{display:flex; gap:12px; flex-wrap:wrap; font-size:13px; color:#cbd5e1}
+    .links a{ color:#93c5fd }
+    .links a:hover{ text-decoration:underline }
+
+    .btn{
+      appearance:none; cursor:pointer; border:1px solid var(--line);
+      background:var(--surface); color:var(--text);
+      padding:10px 14px; border-radius:12px; font-weight:700;
+      width:100%; margin-top:14px;
+    }
+    .btn.primary{ background:#000; border-color:#000 }
+    .btn.primary:hover{ filter:brightness(1.15) }
+
+    .footer{ margin-top:14px; text-align:center; color:var(--muted); font-size:12px }
+  
+
+
+
+
+/* Keep the caret tight to label */
+.tabs-top .dropdown .dropdown-btn::after{ content:''; }
+
+
+/* === Light theme (refined v3): stronger greys, no text pills === */
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --brand:#ffffff;
+  --surface:#ffffff;
+  --elev:#ffffff;
+  --line:#94a3b8;         /* darker separators */
+  --text:#0b1324;         /* primary text */
+  --muted:#334155;        /* secondary text */
+  --accent:#7c3aed;       /* purple */
+  --accent2:#2563eb;      /* blue */
+  --good:#047857;
+  --warn:#b45309;
+  --bad:#b91c1c;
+  --chip:#f8fafc;
+  --chip-border:#cbd5e1;
+  --rail-pending:#fee2e2;
+  --rail-progress:#dbeafe;
+  --rail-done:#dcfce7;
+  --sla-gray:#cbd5e1;
+}
+:root[data-theme="light"] body{
+  background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+  color:var(--text);
+}
+:root[data-theme="light"] .top{ 
+  background:#ffffffcc; 
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+/* Tabs */
+:root[data-theme="light"] .tabs-top .tab-top{ color:#334155 }
+:root[data-theme="light"] .tabs-top .tab-top.active{ color:#0b1324; border-bottom:2px solid var(--accent2) }
+/* Panels & lists */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .dropdown-menu,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row{
+  background:#ffffff;
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+:root[data-theme="light"] .list .row:hover{ background:#f8fafc }
+/* Remove "pills" around plain text in light mode */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:transparent;
+  border:0;
+  padding:0;
+  color:var(--muted);
+}
+/* Buttons: keep action buttons dark for contrast */
+:root[data-theme="light"] .btn{ 
+  background:#111827; 
+  color:#fff; 
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+/* Admin dropdown button: treat like a tab (handled by global rule above) */
+:root[data-theme="light"] .dropdown .dropdown-btn{
+  background:transparent; border:0; color:inherit;
+}
+/* Inputs */
+:root[data-theme="light"] .input, 
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus{
+  outline:2px solid var(--accent2); border-color:transparent;
+}
+/* Dropdown menu links */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* Links */
+:root[data-theme="light"] a{ color:#2563eb }
+/* Avatar initials */
+:root[data-theme="light"] .avatar{ color:#ffffff }
+/* Alerts */
+:root[data-theme="light"] .alert{ border-color:#fecaca; background:#fff5f5; color:#7f1d1d }
+
+
+/* === Light-mode tweaks: assigned text & read/unread pills === */
+:root[data-theme="light"] .assigned{ color:#334155 } /* darker secondary text */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
+
+
+/* === Light-mode: preserve SLA colors & refine chips === */
+:root[data-theme="light"] .sla{
+  /* base: no background so colored states below can show */
+  background:transparent;
+  color:#0b1324;
+  border:1px solid #cbd5e1;
+}
+:root[data-theme="light"] .sla.gray{
+  background:#e2e8f0;      /* slate-200 */
+  color:#334155;           /* slate-700 */
+  border-color:#94a3b8;    /* slate-400 */
+}
+:root[data-theme="light"] .sla.yellow{
+  background:#fef3c7;      /* amber-100 */
+  color:#92400e;           /* amber-900 */
+  border-color:#f59e0b;    /* amber-500 */
+}
+:root[data-theme="light"] .sla.orange{
+  background:#ffedd5;      /* orange-100 */
+  color:#9a3412;           /* orange-900 */
+  border-color:#ea580c;    /* orange-600 */
+}
+:root[data-theme="light"] .sla.red{
+  background:#fee2e2;      /* red-100 */
+  color:#7f1d1d;           /* red-900 */
+  border-color:#dc2626;    /* red-600 */
+}
+:root[data-theme="light"] .sla.done{
+  background:#dcfce7;      /* emerald-100 */
+  color:#065f46;           /* emerald-900 */
+  border-color:#10b981;    /* emerald-500 */
+}
+
+/* Timestamp (initial time/date): no background, subtle grey text */
+:root[data-theme="light"] .created{
+  background:transparent;
+  border:0;
+  color:#64748b;           /* slate-500 */
+  padding:0;
+}
+
+/* Subtle comment history pill (like read/unread) */
+:root[data-theme="light"] .commentpill,
+:root[data-theme="light"] .comments-pill,
+:root[data-theme="light"] .commentsCount,
+:root[data-theme="light"] .comments-count{
+  background:#e0e7ff;      /* indigo-100 */
+  color:#1e3a8a;           /* indigo-900 */
+  border:1px solid #c7d2fe;/* indigo-200 */
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Assigned text: keep darker for readability */
+:root[data-theme="light"] .assigned{ color:#334155 }
+
+
+/* Header consistency: Admin dropdown matches other header buttons */
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:8px;
+  padding:8px 10px;
+  font-weight:700;
+  color:inherit;
+}
+.tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(0,0,0,0.06);
+}
+:root[data-theme="dark"] .tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(255,255,255,0.06);
+}
+
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card" role="dialog" aria-modal="true" aria-label="Login to TaskFlow">
+      <div class="logo">
+        <div class="mark">TaskFlow</div>
+      </div>
+      <div class="subtitle">Sign in to continue</div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert" role="alert">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('login') }}">
+        <label for="username">Username or Email</label>
+        <input id="username" name="username" class="input" type="text" required autofocus autocomplete="username" />
+
+        <label for="password">Password</label>
+        <div class="password-wrapper">
+          <input id="password" name="password" class="input" type="password" required autocomplete="current-password" />
+          <span class="toggle-password" id="togglePassword" title="Show/Hide Password" aria-label="Toggle password visibility">
+            <!-- Closed eye (slash) as default -->
+            <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+              <path fill="none" stroke="#8aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+              <line x1="1" y1="1" x2="23" y2="23" stroke="#8aa" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <!-- Open eye (hidden initially) -->
+            <svg id="eyeOpen" style="display:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+              <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+              <circle cx="12" cy="12" r="2.5"/>
+            </svg>
+          </span>
+        </div>
+
+        <div class="row">
+          <div class="links">
+            <a href="{{ url_for('register_shop') }}">Create a new shop</a>
+          </div>
+        </div>
+
+        <button type="submit" class="btn primary">Login</button>
+      </form>
+<div class="footer" style="margin-top:10px"><a href="{{ url_for('reset_password') }}">Forgot your password?</a></div>
+
+
+      <div class="footer">
+        Having trouble? Contact your manager for access.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput  = document.getElementById('password');
+    const eyeOpen        = document.getElementById('eyeOpen');
+    const eyeClosed      = document.getElementById('eyeClosed');
+
+    togglePassword?.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeOpen.style.display   = isPassword ? 'block' : 'none';
+      eyeClosed.style.display = isPassword ? 'none'  : 'block';
+    });
+  </script>
+<script>
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved==='light' || saved==='dark'){
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
+</script>
+
+<script>
+
+/* Normalize .readpill styling by text content across all pages */
+(function(){
+  function applyState(el){
+    const t = (el.textContent||'').trim().toLowerCase();
+    if(t === 'unread'){
+      el.classList.add('is-unread');
+      el.classList.remove('is-read');
+    }else if(t === 'read'){
+      el.classList.add('is-read');
+      el.classList.remove('is-unread');
+    }else{
+      el.classList.remove('is-read','is-unread');
+    }
+  }
+  function wire(el){
+    applyState(el);
+    const mo = new MutationObserver(()=>applyState(el));
+    mo.observe(el, {childList:true, characterData:true, subtree:true});
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.readpill').forEach(wire);
+  });
+})();
+
+</script>
+</body>
+</html>
+
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Paste ONLY the unique content of this page here -->
+    <!-- Everything that was inside <main> or the main body area -->
+{% endblock %}

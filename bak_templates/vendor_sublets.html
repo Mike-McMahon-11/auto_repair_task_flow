@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8" /><title>TaskFlow — Vendor Sublets</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{ --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937; --text:#e5e7eb; --muted:#a3b2c6; --accent2:#2563eb }
+body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.card{max-width:1100px; margin:30px auto; padding:16px; border:1px solid var(--line); border-radius:16px; background:#0b1220cc}
+.row{display:grid; grid-template-columns:180px 1fr 140px; gap:10px; align-items:center; border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--surface)}
+:root[data-theme="light"] body{background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:#0b1324}
+:root[data-theme="light"] .card,.row{background:#fff; border:1px solid #94a3b8; box-shadow:0 10px 28px rgba(15,23,42,.08)}
+</style></head>
+<body>
+<div class="card">
+  <h2 style="margin:0 0 10px">My Assigned Sublets</h2>
+  <div id="list">
+    {% for s in sublets %}
+      <div class="row">
+        <div><b>{{ s.ro_number }}</b><div class="sub" style="color:var(--muted)">{{ s.category }} • {{ s.vendor_name }}</div></div>
+        <div>{{ s.details }}</div>
+        <div style="text-align:right">{{ s.status }}</div>
+      </div>
+    {% else %}
+      <div class="row"><em>No sublets assigned yet.</em></div>
+    {% endfor %}
+  </div>
+</div>
+<script>(function(){ const t=localStorage.getItem('theme'); if(t) document.documentElement.setAttribute('data-theme', t); })();</script>
+</body></html>

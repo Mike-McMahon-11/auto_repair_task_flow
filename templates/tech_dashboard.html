@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Tech Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#2563eb; --good:#10b981;
+    }
+
+    /* === LIGHT MODE FIX FOR TECH DASHBOARD === */
+    :root[data-theme="light"]{
+      --bg:#f6f7fb;
+      --surface:#ffffff;
+      --elev:#ffffff;
+      --line:#d1d5db;
+      --text:#0f172a;
+      --muted:#475569;
+    }
+
+    /* Page background */
+    :root[data-theme="light"] body{
+      background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+    }
+
+    /* Cards */
+    :root[data-theme="light"] .card{
+      background:#ffffff;
+      border:1px solid var(--line);
+      box-shadow:0 10px 25px rgba(15,23,42,.08);
+      transition:all .15s ease;
+    }
+
+    /* Hover = important for feel */
+    :root[data-theme="light"] .card:hover{
+      transform:translateY(-2px);
+      box-shadow:0 14px 30px rgba(15,23,42,.12);
+    }
+
+    /* Text inside cards */
+    :root[data-theme="light"] .card h3{
+      color:#0f172a;
+    }
+
+    :root[data-theme="light"] .card p{
+      color:#475569;
+    }
+
+    /* Header fix */
+    :root[data-theme="light"] .top{
+      background:#ffffffcc;
+      backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--line);
+    }
+
+    /* FIX LOGO IN LIGHT MODE */
+    :root[data-theme="light"] .mark{
+      background:#ffffff;
+      color:#0f172a; /* force readable text */
+      border:1px solid var(--line);
+    }
+
+    
+    :root[data-theme="light"] .card:nth-child(1){ border-top:3px solid #3b82f6; }
+    :root[data-theme="light"] .card:nth-child(2){ border-top:3px solid #10b981; }
+    :root[data-theme="light"] .card:nth-child(3){ border-top:3px solid #f59e0b; }
+    :root[data-theme="light"] .card:nth-child(4){ border-top:3px solid #fe0000; }
+    :root[data-theme="light"] .card:nth-child(5){ border-top:3px solid #6a10b9; }
+    :root[data-theme="light"] .card:nth-child(6){ border-top:3px solid #8c8c8c; }
+    :root[data-theme="light"] .card:nth-child(7){ border-top:3px solid #adbe32; }
+    :root[data-theme="light"] .card:nth-child(8){ border-top:3px solid #1a1a1a; }
+
+    :root[data-theme="dark"] .card:nth-child(1){ border-top:3px solid #3b82f6; }
+    :root[data-theme="dark"] .card:nth-child(2){ border-top:3px solid #10b981; }
+    :root[data-theme="dark"] .card:nth-child(3){ border-top:3px solid #f59e0b; }
+    :root[data-theme="dark"] .card:nth-child(4){ border-top:3px solid #fe0000; }
+    :root[data-theme="dark"] .card:nth-child(5){ border-top:3px solid #6a10b9; }
+    :root[data-theme="dark"] .card:nth-child(6){ border-top:3px solid #8c8c8c; }
+    :root[data-theme="dark"] .card:nth-child(7){ border-top:3px solid #adbe32; }
+    :root[data-theme="dark"] .card:nth-child(8){ border-top:3px solid #1a1a1a; }
+
+    .card:nth-child(1){ border-top:3px solid #3b82f6; }
+    .card:nth-child(2){ border-top:3px solid #10b981; }
+    .card:nth-child(3){ border-top:3px solid #f59e0b; }
+    .card:nth-child(4){ border-top:3px solid #fe0000; }
+    .card:nth-child(5){ border-top:3px solid #6a10b9; }
+    .card:nth-child(6){ border-top:3px solid #8c8c8c; }
+    .card:nth-child(7){ border-top:3px solid #e0f63b; }
+    .card:nth-child(8){ border-top:3px solid #000000; }
+ 
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:#93c5fd; text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* Header */
+    :root{ --top-h:38px }
+    .top{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:var(--brand);
+      border-bottom:1px solid var(--line);
+    }
+
+    [data-theme="light"] .top{
+      background:#ffffffcc;
+      backdrop-filter:blur(6px);
+    }
+
+    .top .inner{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800}
+    .mark{padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--brand)}
+    .user{display:flex; align-items:center; gap:10px}
+    .avatar{width:28px; height:28px; border-radius:50%; background:#334155; color:#fff; display:grid; place-items:center; font-weight:800}
+    .dropdown{position:relative}
+    .dropdown-btn{padding:8px 10px; height:var(--top-h); line-height:calc(var(--top-h) - 16px); border-radius:8px; background:transparent; border:0; color:inherit; font-weight:700; cursor:pointer}
+    .dropdown-menu{position:absolute; right:0; top:calc(100% + 6px); min-width:180px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:6px; box-shadow:0 10px 28px rgba(0,0,0,.35); display:none}
+    .dropdown-menu a{display:block; padding:8px 10px; color:var(--text); border-radius:8px; text-decoration:none}
+    .dropdown-menu a:hover{background:rgba(255,255,255,.06)}
+
+    .wrap{background:var(--surface); max-width:1100px; margin:16px auto; padding:0 16px}
+    .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px}
+    @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:560px){.grid{grid-template-columns:1fr}}
+
+    .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; cursor:pointer; transition:transform .05s ease, filter .1s ease}
+    .card:hover{background:rgba(59,130,246,0.06);}
+    .card h3{margin:0 0 6px}
+    .card p{margin:0; color:var(--muted)}
+    [data-theme="light"] .card{
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+    }
+
+    .btn{background:var(--accent2); color:#fff; border:1px solid var(--accent2); padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer}
+
+    .btn:hover{
+      filter:brightness(1.05);
+    }
+
+    /* Dialogs */
+    .sheet{position:fixed; inset:0; background:rgba(0,0,0,.42); display:none; place-items:center; z-index:60}
+    .panel{max-width:640px; margin:60px auto; padding:16px; border-radius:14px; background:var(--surface); border:1px solid var(--line); box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .pill{background:#1e40af; color:#fff; border:0; display:inline-block; padding:4px 10px; border-radius:999px; margin-bottom:8px}
+
+    label{display:block; margin:8px 0 6px; font-weight:600; color:var(--muted);}
+
+    .input, textarea, select{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+
+    /* Photo upload area */
+    .photo-upload-area{
+      border:2px dashed var(--line);
+      border-radius:10px;
+      padding:16px;
+      text-align:center;
+      cursor:pointer;
+      transition: all 0.2s;
+    }
+    .photo-upload-area:hover{
+      border-color:var(--accent2);
+      background:rgba(59,130,246,0.06);
+    }
+    .photo-preview{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+    }
+    .preview-thumb{
+      width:80px;
+      height:80px;
+      object-fit:cover;
+      border-radius:8px;
+      border:1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="top">
+    <div class="inner">
+      <div class="brand"><div class="mark">TaskFlow</div></div>
+      <div class="user">
+        <div class="dropdown">
+          <button class="dropdown-btn" id="userMenuBtn" aria-label="Open user menu">
+            <span class="avatar">{{ (current_user.username or 'T')[0]|upper if current_user.is_authenticated else 'U' }}</span>
+          </button>
+          <div class="dropdown-menu" id="userMenu">
+            <a href="{{ url_for('profile') }}">Your Profile</a>
+            <a href="{{ url_for('settings') }}">Settings</a>
+            <a href="{{ url_for('logout') }}">Sign out</a>
+          </div>
+        </div>
+        <div class="who">
+          {% if current_user.is_authenticated %}
+            <div class="who-name">{{ current_user.username }}</div>
+            <div class="who-email">{{ current_user.email }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <h2 style="margin:0 0 6px">Create a New Request</h2>
+    <p style="margin:0 0 16px; color:var(--muted)">Select the type of request you'd like to create</p>
+
+    <div class="grid">
+      {% set blocks = [
+        ('Blueprint','Parts + Estimator'),
+        ('Supplement','Estimator'),
+        ('Phase Change','Estimator'),
+        ('Vehicle Complete','CSR + Estimator + Porter'),
+        ('Supplies','Parts Coordinator'),
+        ('Pull Parts','Parts Coordinator'),
+        ('Return Parts','Parts Coordinator'),
+        ('In Process Photos','Estimator')
+      ] %}
+
+      {% for title, sub in blocks %}
+        <div class="card" data-open="dlg-{{ loop.index }}">
+          <h3>{{ title }}</h3>
+          <p>{{ sub }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Dialogs -->
+  {% for i in range(1,9) %}
+  <div class="sheet" id="dlg-{{ i }}">
+    <div class="panel">
+      <h3 style="margin:0 0 6px">New Request</h3>
+      <div class="pill"><span id="banner-{{ i }}"></span></div>
+
+      <label>Comments</label>
+      <textarea class="input" id="cmt-{{ i }}" rows="3"></textarea>
+
+      <!-- Multiple photo upload with live preview -->
+      {% if i in [1,3,8] %}
+        <label>Photos (optional — click to add more)</label>
+        <div class="photo-upload-area" onclick="document.getElementById('photos-{{ i }}').click()">
+          <input type="file" id="photos-{{ i }}" name="photos" accept="image/png,image/jpeg" multiple style="display:none;">
+          <div style="color:var(--muted); font-size:13px;">Click here to select photos (you can add more)</div>
+        </div>
+        <div id="photo-preview-{{ i }}" class="photo-preview"></div>
+      {% endif %}
+
+      {% if i in [2,3,4] %}
+        <label>Associated Sublets (optional)</label>
+        <div>
+          <select id="vendorType-{{ i }}" class="input">
+            <option value="">Vendor Type…</option>
+            <option>Glass</option><option>Striping</option><option>Sensor</option><option>Alignment</option><option>Misc</option>
+          </select>
+          <div id="vendors-{{ i }}" style="max-height:140px; overflow:auto; border:1px solid var(--line); border-radius:10px; padding:6px; margin-top:6px"></div>
+        </div>
+      {% endif %}
+
+      <label style="display:flex; align-items:center; gap:8px; margin-top:8px">
+        <input type="checkbox" id="urgent-{{ i }}" /> Mark as Urgent
+      </label>
+
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px">
+        <button class="btn" data-close type="button" style="background:#111827; border-color:#111827">Cancel</button>
+        <button class="btn" data-create type="button">Create Request</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+<script>
+
+const fileStore = {};
+
+// Theme
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved==='light' || saved==='dark'){
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
+
+// Dropdown
+(function(){
+  const btn = document.getElementById('userMenuBtn');
+  const menu = document.getElementById('userMenu');
+  function close(){ menu.style.display='none'; document.removeEventListener('click', onDoc); }
+  function onDoc(e){ if(!menu.contains(e.target) && e.target!==btn) close(); }
+  btn?.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    menu.style.display = (menu.style.display==='block' ? 'none' : 'block');
+    if(menu.style.display==='block') document.addEventListener('click', onDoc);
+  });
+})();
+
+// Photo handling + submit
+(function(){
+  const blocks = [
+    'Blueprint: Parts Coordinator(s)',
+    'Supplement: Estimator(s)',
+    'Phase Change: Estimator(s)',
+    'Vehicle Complete: Estimator(s)',
+    'Supplies: Estimator(s)',
+    'Pull Parts: Parts Coordinator(s)',
+    'Return Parts: Parts Coordinator(s)',
+    'In Process Photos: Estimator(s)'
+  ];
+
+  // Open dialog
+  document.querySelectorAll('.card').forEach((card, idx)=>{
+    card.addEventListener('click', ()=>{
+      const i = idx+1;
+      const dlg = document.getElementById('dlg-'+i);
+      dlg.style.display = 'block';
+      document.getElementById('banner-'+i).textContent = blocks[idx];
+      document.getElementById('photo-preview-'+i).innerHTML = '';
+    });
+  });
+
+  // Close
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.target.closest('.sheet').style.display = 'none';
+    });
+  });
+
+  // Photo input - append + live preview
+  document.querySelectorAll('input[type="file"][id^="photos-"]').forEach(input => {
+    const i = input.id.split('-')[1];
+    const preview = document.getElementById('photo-preview-'+i);
+
+    input.addEventListener('change', () => {
+      if (!fileStore[i]) fileStore[i] = [];
+
+      Array.from(input.files || []).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
+        fileStore[i].push(file); // ✅ STORE IT
+
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'preview-thumb';
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      input.value = ''; // 🔥 KEY: allows re-selecting same file later
+    });
+  });
+
+  // Create request
+  document.querySelectorAll('[data-create]').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      const sheet = e.target.closest('.sheet');
+      const i = parseInt(sheet.id.split('-')[1], 10);
+
+      const fd = new FormData();
+      fd.append('kind', 'tech');
+      fd.append('request_type', blocks[i-1].split(':')[0]);
+      fd.append('comments', document.getElementById('cmt-'+i).value || '');
+      fd.append('urgent', document.getElementById('urgent-'+i).checked ? '1' : '');
+
+      // All selected photos
+      if (fileStore[i]) {
+        fileStore[i].forEach(file => fd.append('photos', file));
+      }
+
+      const res = await fetch('/tech/requests', { method: 'POST', body: fd });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json.ok) {
+        alert('Could not create the request. Please try again.');
+        return;
+      }
+
+      alert('Request submitted successfully!');
+
+      fileStore[i] = [];
+
+      // Reset
+      sheet.style.display = 'none';
+      sheet.querySelectorAll('textarea').forEach(t => t.value = '');
+      sheet.querySelectorAll('input[type="file"]').forEach(inp => { try { inp.value = ''; } catch(e){} });
+      sheet.querySelectorAll('input[type="checkbox"]').forEach(ch => ch.checked = false);
+      document.getElementById('photo-preview-'+i).innerHTML = '';
+    });
+  });
+})();
+</script>
+</body>
+</html>

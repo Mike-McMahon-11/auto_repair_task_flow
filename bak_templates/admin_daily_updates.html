@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Daily Updates</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --rail-pending:#ef444433; --rail-progress:#3b82f633; --rail-done:#10b98133;
+      --chip:#0b1220; --chip-border:#334155;
+      --sla-gray:#374151;
+      --top-h:42px; --top-pad:6px 10px; --top-radius:10px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar */
+    .top .inner > *:is(.logo, .tabs-top, .user) { height: var(--top-h); display:flex; align-items:center }
+    .tabs-top .tab-top,
+    .tabs-top .dropdown .dropdown-btn,
+    .user .pill,
+    .user .btn,
+    .profile-btn { height: calc(var(--top-h) - 6px); padding: var(--top-pad); border-radius: var(--top-radius); display:inline-flex; align-items:center }
+
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:#cbd5e1; position:relative; font-weight:700}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:#cbd5e1; font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+    .btn.black{background:#000; border-color:#000}
+    .btn.primary{border-color:#334155}
+    .btn.danger{border-color:#7f1d1d; color:#fecaca}
+    */
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+
+    /* Subscription chip */
+    .sub-status{
+      display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip);
+      border-radius:999px; font-size:12px; color:#cbd5e1;
+    }
+    .sub-status .dot{ width:8px; height:8px; border-radius:50%; background:var(--good) }
+    .sub-status.warn .dot{ background:var(--warn) }
+
+    /* Subtabs */
+    .tabs{display:flex; align-items:center; gap:18px; padding:0 6px; border-bottom:1px solid var(--line)}
+    .tab{position:relative; padding:12px 2px; color:#cbd5e1; font-weight:800}
+    .tab.active{color:#fff}
+    .tab.active::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent2); border-radius:2px}
+    .badge{display:inline-block; margin-left:8px; padding:2px 8px; background:#1f2937; border-radius:999px; font-size:11px; color:#e5e7eb}
+
+    /* List / rows */
+    .list{display:flex; flex-direction:column; gap:10px; padding:12px 6px 0}
+    .row{position:relative; padding:12px 12px; border:1px solid var(--line); border-radius:12px; background:var(--elev); cursor:pointer}
+    .row.user-panel{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .row.user-panel .title{font-weight:800}
+    .row.user-panel .chev{margin-left:auto; transition:transform .18s ease}
+    .row.user-panel.expanded .chev{transform:rotate(180deg)}
+
+    .created{ font-size:12px; color:#cbd5e1; background:#0c1424; border:1px solid var(--line); border-radius:999px; padding:4px 8px }
+    .sla{ font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:var(--sla-gray); color:#e5e7eb }
+    .sla.gray{ background:#0c1424; border-color:#1f2937; color:#cbd5e1 }
+
+    /* Questions accordion */
+    .accordion-wrap{ margin:6px 0 12px 18px; }
+    .accordion-head{ display:flex; align-items:center; gap:8px; margin:2px 0 8px; color:#93c5fd; font-weight:800; text-transform:uppercase; font-size:12px; }
+    .accordion-body{ display:flex; flex-direction:column; gap:8px }
+    .qrow{ display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--line); background:#0f172a; border-radius:10px; }
+    .qrow .spacer{ flex:1 }
+    .qrow .question-title{ font-weight:800; margin-bottom:2px }
+    .qrow .question-body{ color:#cbd5e1 }
+    .qrow .replies-count{ margin-left:auto }
+    .replies-count{ color:var(--accent2); font-weight:700; cursor:pointer; text-decoration:none }
+    .replies-count:hover{ text-decoration:underline }
+
+    .btn.delbtn{ padding:6px 10px }
+
+    /* Add Questions form */
+    .panel{background:var(--elev)/* patched from dark translucency */; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:14px}
+    .form-grid{display:grid; grid-template-columns:220px 1fr auto; gap:12px; align-items:start}
+    .textarea{ min-height:90px; resize:vertical }
+    .hint{ font-size:12px; color:#93c5fd; opacity:.9 }
+    .helper{ font-size:12px; color:#a3b2c6; margin-top:4px }
+
+    /* Inputs & modal */
+    .input, select, textarea{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--elev); color:var(--text)}
+    .btn.inline{ padding:6px 10px }
+    .modal-backdrop{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.55); z-index:70 }
+    .modal{ width:min(640px,calc(100% - 40px)); background:var(--elev); border:1px solid var(--line); border-radius:14px; padding:16px }
+    .modal h3{ margin:0 0 12px }
+    .modal .body{ max-height:55vh; overflow:auto; color:#cbd5e1; }
+    .comment{ border:1px solid var(--line); background:#0f172a; border-radius:10px; padding:8px 10px }
+    .desc-label{ font-size:12px; font-weight:700; letter-spacing:.3px; color:#93c5fd; margin:0 0 6px; text-transform:uppercase; }
+    .desc-box{ background:#0b1a32; border:1px solid #1f3b67; color:#e5e7eb; padding:10px 12px; border-radius:10px; white-space:pre-wrap; }
+    #rdForm{ display:flex; gap:8px; align-items:center; margin-top:8px }
+    #rdForm .input{ flex:1 }
+
+    @media (max-width:1200px){ .user{display:none} }
+    @media (max-width:700px){
+      .tabs-top{display:none}
+      .form-grid{ grid-template-columns:1fr; }
+    }
+  
+/* Avatar & profile dropdown */
+.avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none }
+.profile{ position:relative }
+.profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text) }
+.profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+.profile-menu.open{ display:flex }
+.profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+.profile-menu a:last-child{ border-bottom:none }
+.profile-menu a:hover{ background:var(--elev) }
+
+/* Keep the caret tight to label */
+.tabs-top .dropdown .dropdown-btn::after{ content:''; }
+
+/* === Light theme === */
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --brand:#ffffff;
+  --surface:#ffffff;
+  --elev:#ffffff;
+  --line:#94a3b8;
+  --text:#0b1324;
+  --muted:#334155;
+  --accent:#7c3aed;
+  --accent2:#2563eb;
+  --good:#047857;
+  --warn:#b45309;
+  --bad:#b91c1c;
+  --chip:#f8fafc;
+  --chip-border:#cbd5e1;
+  --rail-pending:#fee2e2;
+  --rail-progress:#dbeafe;
+  --rail-done:#dcfce7;
+  --sla-gray:#cbd5e1;
+}
+:root[data-theme="light"] body{
+  background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+  color:var(--text);
+}
+:root[data-theme="light"] .top{ 
+  background:#ffffffcc; 
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+:root[data-theme="light"] .tabs-top .tab-top{ color:#334155 }
+:root[data-theme="light"] .tabs-top .tab-top.active{ color:#0b1324; border-bottom:2px solid var(--accent2) }
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .dropdown-menu,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row{
+  background:#ffffff;
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+:root[data-theme="light"] .list .row:hover{ background:#f8fafc }
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:transparent;
+  border:0;
+  padding:0;
+  color:var(--muted);
+}
+:root[data-theme="light"] .btn{ 
+  background:#111827; 
+  color:#fff; 
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+:root[data-theme="light"] .dropdown .dropdown-btn{
+  background:transparent; border:0; color:inherit;
+}
+:root[data-theme="light"] .input, 
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus{
+  outline:2px solid var(--accent2); border-color:transparent;
+}
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+:root[data-theme="light"] a{ color:#2563eb }
+:root[data-theme="light"] .avatar{ color:#ffffff }
+:root[data-theme="light"] .alert{ border-color:#fecaca; background:#fff5f5; color:#7f1d1d }
+:root[data-theme="light"] .assigned{ color:#334155 }
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .sla{
+  background:transparent;
+  color:#0b1324;
+  border:1px solid #cbd5e1;
+}
+:root[data-theme="light"] .sla.gray{
+  background:#e2e8f0;
+  color:#334155;
+  border-color:#94a3b8;
+}
+:root[data-theme="light"] .created{
+  background:transparent;
+  border:0;
+  color:#64748b;
+  padding:0;
+}
+:root[data-theme="light"] .commentpill,
+:root[data-theme="light"] .comments-pill,
+:root[data-theme="light"] .commentsCount,
+:root[data-theme="light"] .comments-count{
+  background:#e0e7ff;
+  color:#1e3a8a;
+  border:1px solid #c7d2fe;
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:8px;
+  padding:8px 10px;
+  font-weight:700;
+  color:inherit;
+}
+.tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(0,0,0,0.06);
+}
+:root[data-theme="dark"] .tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(255,255,255,0.06);
+}
+.tabs-top .tab-top{ display:inline-flex; align-items:center; justify-content:center; line-height:1.1 }
+  
+:root[data-theme="light"] input[type="date"]{ color-scheme: light; }
+</style>
+<style>
+
+/* === Index-aligned Light Mode Overrides === */
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .user .btn,
+:root[data-theme="light"] .top .btn{
+  background:#111827; color:#ffffff; border:1px solid #111827;
+}
+:root[data-theme="light"] .tabs-top .tab-top{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .tabs-top .tab-top.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+:root[data-theme="light"] .dropdown .dropdown-btn,
+:root[data-theme="light"] .profile-btn{
+  color:var(--text);
+}
+/* Subtabs (where present) */
+:root[data-theme="light"] .subtabs .subtab{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .subtabs .subtab.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+/* Ensure header pills and plan chip are readable */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  color:#334155;
+}
+/* Keep dropdown menus readable */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* === End Index-aligned Light Mode Overrides === */
+
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" id="adminDropdown">
+          <button class="dropdown-btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem">Team</a>
+            <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set plan = (current_user.plan or 'free')|lower %}
+        {% set is_pro = current_user.is_authenticated and (plan != 'free') %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <main class="inner" style="padding:18px 20px">
+    <h1 style="margin:0 0 4px">Daily Updates</h1>
+    <div style="color:#93c5fd; margin:0 0 14px">Create and monitor daily questions for your technical team members</div>
+
+    <!-- Subtabs -->
+    <nav class="tabs" aria-label="Daily Updates tabs" style="margin:6px 0 16px">
+      <a class="tab {{ 'active' if request.args.get('tab','active')=='active' else '' }}" href="{{ url_for('admin_daily_updates') }}?tab=active">Active Questions</a>
+      <a class="tab {{ 'active' if request.args.get('tab')=='add' else '' }}" href="{{ url_for('admin_daily_updates') }}?tab=add">Add Questions</a>
+    </nav>
+
+    {% if request.args.get('tab','active') == 'active' %}
+    <section class="list" id="activeList">
+      {% if not panels %}
+        <div class="row" style="justify-content:center; opacity:.8">No active questions.</div>
+      {% endif %}
+      {% for p in panels %}
+        <article class="row user-panel" data-user-id="{{ p.user_id }}" tabindex="0" aria-expanded="false" aria-controls="q_for_user_{{ p.user_id }}">
+          <div class="title">{{ p.username }}</div>
+          <span class="sla gray">{{ p.count }} questions</span>
+          <span class="chev">▾</span>
+        </article>
+        <div class="accordion-wrap" id="q_for_user_{{ p.user_id }}" hidden>
+          <div class="accordion-body">
+            {% for q in p.questions %}
+              <div class="qrow" data-question-id="{{ q.id }}">
+                <div style="min-width:0; max-width:70%">
+                  <div class="question-title">Question {{ loop.index }}</div>
+                  <div class="question-body">{{ q.body }}</div>
+
+                  <!-- replies: inside the panel, under the text -->
+                  <div class="replies-line">
+                    <a class="replies-count"
+                      data-open-replies="{{ q.id }}"
+                      href="javascript:void(0)"
+                      data-n="{{ q.replies_rel|length if q.replies_rel is defined else 0 }}">
+                      {{ (q.replies_rel|length if q.replies_rel is defined else 0) }} replies
+                    </a>
+                  </div>
+                </div>
+
+                <div class="spacer"></div>
+                <span class="created">{{ (q.created_at.strftime('%m/%d/%Y') if q.created_at else '') }}</span>
+
+                {% if is_admin %}
+                <form method="post" action="{{ url_for('delete_daily_question', qid=q.id) }}" style="margin:0">
+                  <button class="btn delbtn danger" type="submit">Delete</button>
+                </form>
+                {% endif %}
+              </div>
+
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if request.args.get('tab') == 'add' %}
+    <section class="panel" aria-labelledby="addTitle">
+      <h2 id="addTitle" style="margin:0 0 12px">Add Question</h2>
+      <form method="post" action="{{ url_for('create_daily_question') }}" id="addQForm">
+        <div class="form-grid">
+          <label>
+            <div class="desc-label">User</div>
+            <select name="user_id" required>
+              <option value="">Select a user…</option>
+              {% for u in add_users %}
+                <option value="{{ u.id }}">{{ u.username }}</option>
+              {% endfor %}
+            </select>
+            <div class="helper">Choose who this question is for.</div>
+          </label>
+
+          <label>
+            <div class="desc-label">Question</div>
+            <textarea class="textarea" name="body" placeholder="Type your question…" required maxlength="500"></textarea>
+            <div class="helper"><span id="charCount">0</span>/500</div>
+          </label>
+
+          <div style="display:flex; align-items:flex-start; gap:8px; padding-top:22px">
+            <button class="btn primary" type="submit" id="createBtn" disabled>Create</button>
+          </div>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+  </main>
+
+  <!-- Reply modal -->
+  <div class="modal-backdrop" id="rdBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Question replies">
+      <h3 id="rdTitle">Question</h3>
+      <div class="body">
+        <div class="desc-label">Question</div>
+        <div class="desc-box" id="rdDesc">—</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="desc-label">Replies</div>
+        <div id="rdComments" class="comments" style="max-height:30vh; overflow:auto; padding-right:4px"></div>
+        <form id="rdForm" class="comment-form">
+          <input class="input" id="rdNew" name="body" placeholder="Write a reply…" autocomplete="off" />
+          <button class="btn" type="submit">Reply</button>
+        </form>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:12px; justify-content:flex-end">
+        <button class="btn" id="rdClose" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  
+  // --- Tabs / Add form helpers ---
+  (function(){
+    const form = document.getElementById('addQForm');
+    if (!form) return;
+    const body = form.querySelector('textarea[name="body"]');
+    const count = document.getElementById('charCount');
+    const btn = document.getElementById('createBtn');
+    const update = () => {
+      count.textContent = String(body.value.length);
+      btn.disabled = !(form.user_id.value && body.value.trim().length);
+    };
+    form.addEventListener('input', update);
+    form.addEventListener('keydown', (e)=>{
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !btn.disabled) form.submit();
+    });
+    update();
+  })();
+
+  // --- Active: accordion toggle ---
+  document.addEventListener('click', (e)=>{
+    const up = e.target.closest('.user-panel');
+    if (!up) return;
+    const id = up.getAttribute('data-user-id');
+    const wrap = document.getElementById('q_for_user_'+id);
+    const expanded = up.getAttribute('aria-expanded') === 'true';
+    if (expanded){
+      up.setAttribute('aria-expanded','false');
+      up.classList.remove('expanded');
+      wrap.hidden = true;
+    } else {
+      up.setAttribute('aria-expanded','true');
+      up.classList.add('expanded');
+      wrap.hidden = false;
+    }
+  });
+
+  // --- Replies open (uses existing openReplies if present) ---
+  document.addEventListener('click', (e)=>{
+    const a = e.target.closest('[data-open-replies]');
+    if (!a) return;
+    e.preventDefault();
+    const row = a.closest('.qrow');
+    if (typeof openReplies === 'function'){ openReplies(row); return; }
+
+    // Fallback minimal modal (no server fetch; shows question text only)
+    const modal = document.getElementById('rdBackdrop');
+    document.getElementById('rdDesc').textContent = row.querySelector('.question-body')?.textContent || '—';
+    modal.style.display = 'grid';
+  });
+  document.getElementById('rdClose')?.addEventListener('click', ()=>{
+    document.getElementById('rdBackdrop').style.display = 'none';
+  });
+
+  (function(){
+    const el = document.querySelector('.avatar[data-name]');
+    if(!el) return;
+    const name = (el.getAttribute('data-name')||'').trim();
+    const initials = name.split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('');
+    let hash=0; for(let i=0;i<name.length;i++){ hash = ((hash<<5)-hash) + name.charCodeAt(i); hash|=0; }
+    const hue = Math.abs(hash)%360;
+    el.style.background = `hsl(${hue} 70% 45%)`;
+    el.textContent = initials || 'U';
+  })();
+
+  (function(){
+    const modal = document.getElementById('rdBackdrop');
+    const title = document.getElementById('rdTitle');
+    const desc  = document.getElementById('rdDesc');
+    const list  = document.getElementById('rdComments');
+    const form  = document.getElementById('rdForm');
+    const input = document.getElementById('rdNew');
+    const btnX  = document.getElementById('rdClose');
+
+    let currentQ = null;
+    let repliesBadge = null;
+
+    function render(items){
+      list.innerHTML = (items||[]).map(r => {
+        const ts = r.created_at ? new Date(r.created_at).toLocaleString() : '';
+        return `
+          <div class="comment">
+            <div style="font-weight:700">${(r.author_name||'User')}</div>
+            <div>${(r.body||'').replace(/</g,'&lt;')}</div>
+            <div style="font-size:12px; color:#93c5fd; margin-top:2px">${ts}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function fetchReplies(qid){
+      list.innerHTML = '<div class="comment">Loading…</div>';
+      fetch(`/admin/daily-updates/questions/${qid}/replies`)
+        .then(r=>r.json())
+        .then(render)
+        .catch(()=>{ list.innerHTML = '<div class="comment">Failed to load replies.</div>'; });
+    }
+
+    function openModalForRow(row){
+      currentQ = row.getAttribute('data-question-id');
+      const titleEl = row.querySelector('.question-title');
+      const bodyEl  = row.querySelector('.question-body');
+
+      // Fill both the dialog title and the main question field
+      title.textContent = titleEl ? titleEl.textContent.trim() : 'Question';
+      desc.textContent  = bodyEl  ? bodyEl.textContent.trim()  : '';
+
+      repliesBadge = row.querySelector('.replies-count');
+      modal.style.display = 'grid';
+      fetchReplies(currentQ);
+      input.focus();
+    }
+
+    function closeModal(){
+      modal.style.display = 'none';
+      currentQ = null; repliesBadge = null;
+      list.innerHTML = ''; input.value = '';
+    }
+
+    // Open when clicking the row OR the blue "n replies" link (inside the same panel)
+    document.addEventListener('click', (e)=>{
+      const link = e.target.closest('.replies-count[data-open-replies]');
+      if (link){
+        const row = link.closest('.qrow');
+        if (row){ e.preventDefault(); openModalForRow(row); }
+        return;
+      }
+      const row = e.target.closest('.qrow[data-question-id]');
+      if (row && !e.target.closest('button,[type=button],[type=submit],a[href]:not([href="javascript:void(0)"])')){
+        openModalForRow(row);
+      }
+    });
+
+    // Submit reply without redirect; append with timestamp; keep dialog open
+    form?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(!currentQ) return;
+      const body = (input.value||'').trim();
+      if(!body) return;
+
+      fetch(`/admin/daily-updates/questions/${currentQ}/replies`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ body })
+      })
+      .then(r=>r.json())
+      .then(res=>{
+        if(!res || !res.ok) return;
+
+        const ts = res.created_at ? new Date(res.created_at).toLocaleString() : new Date().toLocaleString();
+        const div = document.createElement('div');
+        div.className = 'comment';
+        div.innerHTML = `
+          <div style="font-weight:700">${res.author_name||'You'}</div>
+          <div>${(res.body||'').replace(/</g,'&lt;')}</div>
+          <div style="font-size:12px; color:#93c5fd; margin-top:2px">${ts}</div>`;
+        list.appendChild(div);
+        input.value = '';
+
+        // bump visible count on the same panel
+        if(repliesBadge){
+          const current = parseInt(
+            repliesBadge.getAttribute('data-n') || repliesBadge.getAttribute('data-replies') || '0', 10
+          ) + 1;
+          repliesBadge.setAttribute('data-n', String(current));
+          repliesBadge.setAttribute('data-replies', String(current));
+          repliesBadge.textContent = current + ' replies';
+        }
+      });
+    });
+
+    btnX?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+  })();
+
+
+
+  </script>
+
+<script>
+// Ensure page theme matches saved preference
+(() => {
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch(e) { /* ignore */ }
+})();
+</script>
+
+<script>
+  // Auto shop switch (admin)
+  const shopSel = document.getElementById('shopSelect');
+  const shopForm = document.getElementById('shopSwitchForm');
+  shopSel?.addEventListener('change', () => shopForm?.submit());
+
+// Avatar helpers + Profile dropdown
+function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+function nameToInitials(s){
+  if(!s) return '??';
+  const parts = String(s).trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '??';
+  if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
+function initAvatars(){
+  document.querySelectorAll('.avatar').forEach(el=>{
+    const name = el.getAttribute('data-name') || el.textContent || '';
+    el.textContent = nameToInitials(name);
+    const hue = Math.abs(strHash(name)) % 360;
+    el.style.background = `hsl(${hue} 60% 35%)`;
+  });
+}
+document.addEventListener('DOMContentLoaded', initAvatars);
+
+const pBtn = document.getElementById('profileBtn');
+const pMenu = document.getElementById('profileMenu');
+pBtn?.addEventListener('click', (e)=>{
+  e.preventDefault();
+  pMenu?.classList.toggle('open');
+  pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+});
+document.addEventListener('click', (e)=>{
+  if(!pMenu) return;
+  if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+    pMenu.classList.remove('open');
+    pBtn?.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
+
+<script>
+  // Unified Admin dropdown behavior (shared across all admin pages)
+  document.addEventListener('DOMContentLoaded', function () {
+    var adminBtn  = document.getElementById('adminBtn');
+    var adminMenu = document.getElementById('adminMenu');
+
+    if (adminBtn && adminMenu) {
+      // Toggle on button click
+      adminBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        var isOpen = adminMenu.classList.toggle('open');
+        adminBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      // Close when clicking outside
+      document.addEventListener('click', function (e) {
+        var clickedInsideMenu   = adminMenu.contains(e.target);
+        var clickedAdminButton  = (e.target === adminBtn);
+
+        if (!clickedInsideMenu && !clickedAdminButton) {
+          adminMenu.classList.remove('open');
+          adminBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

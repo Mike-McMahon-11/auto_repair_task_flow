@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Vendors</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+      --top-h:42px; --top-pad:6px 10px; --top-radius:10px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* --- Top bar (identical to Reports/Daily Updates) --- */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .top .inner > *:is(.logo, .tabs-top, .user){ height:var(--top-h); display:flex; align-items:center }
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:#cbd5e1; position:relative; font-weight:700; display:inline-flex; align-items:center; height:calc(var(--top-h) - 6px)}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:#cbd5e1; font-size:12px; height:calc(var(--top-h) - 6px)}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:6px 10px; border-radius:10px; font-weight:700; height:calc(var(--top-h) - 6px)}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:transparent; border:0; color:inherit; padding:6px 10px; border-radius:10px; height:calc(var(--top-h) - 6px)}
+    .dropdown-btn:hover{ background:rgba(255,255,255,0.06) }
+    :root[data-theme="light"] .dropdown-btn:hover{ background:rgba(0,0,0,0.06) }
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+
+    /* Subscription pill */
+    .sub-status{
+      display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip);
+      border-radius:999px; font-size:12px; color:#cbd5e1; height:calc(var(--top-h) - 6px)
+    }
+    .sub-status .dot{ width:8px; height:8px; border-radius:50%; background:var(--good) }
+    .sub-status.warn .dot{ background:var(--warn) }
+
+    /* Avatar & profile dropdown */
+    .avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; color:#fff; letter-spacing:.5px; user-select:none }
+    .profile{ position:relative }
+    .profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text); height:calc(var(--top-h) - 6px) }
+    .profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+    .profile-menu.open{ display:flex }
+    .profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+    .profile-menu a:last-child{ border-bottom:none }
+    .profile-menu a:hover{ background:var(--elev) }
+
+    /* Page */
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{background:var(--elev)/* patched from dark translucency */; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:16px}
+    .grid{display:grid; grid-template-columns: 2fr 1fr; gap:12px}
+    .input,select,textarea{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+    .btn.primary{background:#2563eb; border-color:#2563eb; color:#fff}
+    .badge{padding:2px 8px; border-radius:999px; border:1px solid var(--line)}
+
+    /* Vendor list */
+    .list{display:flex; flex-direction:column; gap:10px}
+    .row{display:flex; align-items:flex-start; gap:12px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+    .row .meta{flex:1}
+    .row .actions{display:flex; gap:8px}
+
+    /* Light theme */
+    :root[data-theme="light"]{
+      --bg:#f6f7fb; --brand:#ffffff; --surface:#ffffff; --elev:#ffffff; --line:#94a3b8; --text:#0b1324; --muted:#334155; --accent:#7c3aed; --accent2:#2563eb;
+      --chip:#f8fafc; --chip-border:#cbd5e1;
+    }
+    :root[data-theme="light"] body{ background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:var(--text)}
+    :root[data-theme="light"] .panel, :root[data-theme="light"] .row{ background:#fff; border:1px solid var(--line); box-shadow:0 10px 28px rgba(15,23,42,.08) }
+    :root[data-theme="light"] .pill{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1 }
+    :root[data-theme="light"] .btn{ background:#111827; color:#fff; border:1px solid #111827 }
+  
+:root[data-theme="light"] input[type="date"]{ color-scheme: light; }
+</style>
+  <style>
+    /* --- Vendor section sub-tabs (shared) --- */
+    .subtabs{ display:flex; gap:8px; margin:10px 0 16px; }
+    .subtab{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border:1px solid var(--line); background:var(--elev);
+      border-radius:999px; font-weight:700; color:#cbd5e1; text-decoration:none;
+    }
+    .subtab.active{ outline:2px solid var(--accent2); color:#fff }
+    :root[data-theme="light"] .subtab{ color:#334155 }
+    :root[data-theme="light"] .subtab.active{ color:#111827 }
+  </style>
+<style>
+
+/* === Index-aligned Light Mode Overrides === */
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .user .btn,
+:root[data-theme="light"] .top .btn{
+  background:#111827; color:#ffffff; border:1px solid #111827;
+}
+:root[data-theme="light"] .tabs-top .tab-top{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .tabs-top .tab-top.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+:root[data-theme="light"] .dropdown .dropdown-btn,
+:root[data-theme="light"] .profile-btn{
+  color:var(--text);
+}
+/* Subtabs (where present) */
+:root[data-theme="light"] .subtabs .subtab{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .subtabs .subtab.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+/* Ensure header pills and plan chip are readable */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  color:#334155;
+}
+/* Keep dropdown menus readable */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* === End Index-aligned Light Mode Overrides === */
+
+</style>
+</head>
+<body>
+<!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="dropdown tab-top" id="adminDropdown">
+          <button class="dropdown-btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a class="{{ 'active' if current_page=='admin_vendor' else '' }}" href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem">Team</a>
+            <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+                      <a href="{{ url_for('admin_vendors') }}" role="menuitem">Vendors</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set plan = (current_user.plan or 'free')|lower %}
+        {% set is_pro = current_user.is_authenticated and (plan != 'free') %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="wrap">
+    <!-- Sub-tabs for Vendor section -->
+    <nav class="subtabs" aria-label="Vendor section tabs">
+      <a class="subtab {{ 'active' if current_page in ('admin_vendor','admin_vendor_approvals') else '' }}" href="{{ url_for('admin_vendor_approvals') }}">Approvals</a>
+      <a class="subtab {{ 'active' if current_page == 'admin_vendors' else '' }}" href="{{ url_for('admin_vendors') }}">Vendors</a>
+    </nav>
+
+    <main class="grid" style="grid-template-columns:1fr">
+      {% set SERVICE_TYPES = ['Glass', 'Striping', 'Sensor', 'Alignment', 'Misc'] %}
+      {% for svc in SERVICE_TYPES %}
+      <section class="panel">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px">
+          <h2 style="margin:0">{{ svc }} Vendors</h2>
+          <span class="badge">{{ (buckets.get(svc, []) | length) }} approved</span>
+        </div>
+
+        {% if buckets.get(svc) %}
+          <div class="list">
+            {% for t in buckets.get(svc, []) %}
+              <div class="row">
+                <div class="meta">
+                  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+                    <strong>{{ t.title or 'Vendor' }}</strong>
+                    <span class="badge">Status: {{ t.status|capitalize }}</span>
+                    <span class="badge">Created: {{ (t.created_at or '') }}</span>
+                  </div>
+                  {% if t.description %}
+                    <div style="margin-top:6px; color:#cbd5e1; white-space:pre-wrap">{{ t.description }}</div>
+                  {% endif %}
+                </div>
+                <div class="actions">
+                  <button class="btn" data-manage-id="{{ t.id }}">Manage</button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty" style="padding:12px; border:1px dashed var(--line); border-radius:10px">
+            No approved vendors in this category yet.
+          </div>
+        {% endif %}
+      </section>
+      {% endfor %}
+    </main>
+  </div>
+
+<script>
+// Delegated handler for Approve/Deny buttons
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-decide]');
+  if (!btn) return;
+  e.preventDefault();
+  const pane = btn.closest('[data-approval-id]');
+  const url = btn.getAttribute('data-endpoint') || (pane ? `/admin/vendor/${pane.getAttribute('data-approval-id')}/decide` : '');
+  const decision = btn.getAttribute('data-decide');
+  if (!pane || !url || !decision) return;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'fetch',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({ decision }).toString()
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // Remove the whole panel
+    pane.remove();
+  } catch (err) {
+    console.error(err);
+    alert('Unable to update this request right now.');
+  }
+});
+</script>
+
+
+<!-- Vendor Manage Modal -->
+<div id="vendorModal" aria-hidden="true" style="position:fixed; inset:0; display:none; z-index:2000;">
+  <div style="position:absolute; inset:0; background:rgba(0,0,0,.45)"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="vendorModalTitle"
+       style="position:relative; max-width:720px; margin:60px auto; background:var(--surface); border:1px solid var(--line);
+              border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.45); overflow:hidden">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)">
+      <h3 id="vendorModalTitle" style="margin:0">Manage Vendor</h3>
+      <button id="vendorModalClose" class="btn" style="height:auto; padding:6px 10px">✕</button>
+    </div>
+    <form id="vendorForm" style="padding:16px; display:grid; gap:12px">
+      <input type="hidden" name="id" id="v_id">
+      <div>
+        <label>Vendor Name</label>
+        <input class="input" type="text" id="v_name" name="name" required>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+        <div>
+          <label>Phone</label>
+          <input class="input" type="tel" id="v_phone" name="phone" placeholder="(555) 123-4567" pattern="\(\d{3}\) \d{3}-\d{4}">
+        </div>
+        <div>
+          <label>Service Type</label>
+          <select class="input" id="v_service_type" name="service_type" required>
+            <option value="" disabled>Select a service type</option>
+            <option>Glass</option>
+            <option>Striping</option>
+            <option>Sensor</option>
+            <option>Alignment</option>
+            <option>Misc</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Address</label>
+        <textarea class="input" id="v_address" name="address" rows="2" placeholder="Street, City, State"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:12px; margin-top:8px">
+        <div style="display:flex; gap:8px">
+          <button class="btn primary" id="v_save" type="submit">Save changes</button>
+        </div>
+        <div>
+          <button class="btn" id="v_remove" type="button" style="border-color:var(--bad); color:#fff; background:var(--bad)">Remove</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Helpers to open/close modal
+const $ = (sel, ctx=document) => ctx.querySelector(sel);
+const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+
+function openVendorModal(){ const m = $('#vendorModal'); if(m){ m.style.display = 'block'; } }
+function closeVendorModal(){ const m = $('#vendorModal'); if(m){ m.style.display = 'none'; } }
+
+$('#vendorModalClose')?.addEventListener('click', (e)=>{ e.preventDefault(); closeVendorModal(); });
+$('#vendorModal')?.addEventListener('click', (e)=>{ if(e.target === e.currentTarget) closeVendorModal(); });
+
+// Parse/format utilities matching your description encoding
+function parseDescription(desc){
+  const out = { address:'', phone:'', service_type:'' };
+  if (!desc) return out;
+  desc.split(/\n+/).forEach(line => {
+    const [k, ...rest] = line.split(':');
+    const v = (rest.join(':') || '').trim();
+    const key = (k || '').trim().toLowerCase();
+    if (key === 'address') out.address = v;
+    if (key === 'phone') out.phone = v;
+    if (key.startsWith('service type')) out.service_type = v;
+  });
+  return out;
+}
+function buildDescription({address, phone, service_type}){
+  const parts = [];
+  if (address) parts.push(`Address: ${address}`);
+  if (phone) parts.push(`Phone: ${phone}`);
+  if (service_type) parts.push(`Service Type: ${service_type}`);
+  return parts.join('\n');
+}
+
+// Manage button -> open modal and fetch data
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-manage-id]');
+  if (!btn) return;
+  e.preventDefault();
+  const id = btn.getAttribute('data-manage-id');
+  try {
+    // Try to fetch JSON from a backend endpoint; if unavailable, hydrate from DOM description
+    let data = null;
+    try{
+      const res = await fetch(`/admin/vendor/${id}.json`, { headers: { 'X-Requested-With':'fetch' }});
+      if (res.ok) data = await res.json();
+    }catch(_){}
+
+    if (!data){
+      // Fallback: read from the DOM row
+      const row = btn.closest('.row');
+      const name = (row?.querySelector('strong')?.textContent || '').replace(/^Vendor:\s*/,'').trim();
+      const descText = row?.querySelector('.meta')?.innerText || '';
+      const parsed = parseDescription(descText);
+      data = { id, name, ...parsed, description: buildDescription(parsed) };
+    }
+
+    // Fill form
+    $('#v_id').value = data.id;
+    $('#v_name').value = (data.name || '').replace(/^Vendor:\s*/,'').trim();
+    $('#v_phone').value = data.phone || '';
+    $('#v_address').value = data.address || '';
+    $('#v_service_type').value = data.service_type || '';
+
+    openVendorModal();
+  } catch (err) {
+    console.error(err);
+    alert('Unable to load vendor details.');
+  }
+});
+
+// Save (update)
+$('#vendorForm')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = $('#v_id').value;
+  const payload = {
+    name: $('#v_name').value.trim(),
+    phone: $('#v_phone').value.trim(),
+    address: $('#v_address').value.trim(),
+    service_type: $('#v_service_type').value,
+  };
+  if (!payload.name || !payload.service_type){
+    alert('Name and Service Type are required.'); return;
+  }
+  try{
+    const res = await fetch(`/admin/vendor/${id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'X-Requested-With':'fetch' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    // Update the row in-place
+    const row = document.querySelector(`button[data-manage-id="${id}"]`)?.closest('.row');
+    if (row){
+      row.querySelector('strong').textContent = json.title || ('Vendor: ' + payload.name);
+      const meta = row.querySelector('.meta');
+      const desc = buildDescription(payload);
+      const descEl = meta.querySelector('div[style*="white-space:pre-wrap"]') || document.createElement('div');
+      descEl.style.marginTop = '6px';
+      descEl.style.color = '#cbd5e1';
+      descEl.style.whiteSpace = 'pre-wrap';
+      descEl.textContent = desc;
+      if (!descEl.parentNode) meta.appendChild(descEl);
+    }
+    closeVendorModal();
+  }catch(err){
+    console.error(err);
+    alert('Save failed.');
+  }
+});
+
+// Remove
+$('#v_remove')?.addEventListener('click', async ()=>{
+  const id = $('#v_id').value;
+  if (!confirm('Remove this vendor? This cannot be undone.')) return;
+  try{
+    const res = await fetch(`/admin/vendor/${id}/remove`, {
+      method: 'POST',
+      headers: { 'X-Requested-With':'fetch' }
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    // Remove from the list
+    const row = document.querySelector(`button[data-manage-id="${id}"]`)?.closest('.row');
+    const section = row?.closest('section.panel');
+    row?.remove();
+    // Decrement badge count
+    const badge = section?.querySelector('.badge');
+    if (badge){
+      const m = (badge.textContent||'').match(/\d+/);
+      if (m){
+        const n = Math.max(0, parseInt(m[0],10) - 1);
+        badge.textContent = badge.textContent.replace(/\d+/, String(n));
+      }
+    }
+    closeVendorModal();
+  }catch(err){
+    console.error(err);
+    alert('Remove failed.');
+  }
+});
+</script>
+
+
+<script>
+// Ensure page theme matches saved preference
+(() => {
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch(e) { /* ignore */ }
+})();
+</script>
+
+
+<script>
+// Admin dropdown open/close
+const adminBtn = document.getElementById('adminBtn');
+const adminMenu = document.getElementById('adminMenu');
+adminBtn?.addEventListener('click', (e) => {
+  e.preventDefault();
+  adminMenu?.classList.toggle('open');
+  adminBtn.setAttribute('aria-expanded', String(adminMenu?.classList.contains('open')));
+});
+document.addEventListener('click', (e) => {
+  if (!adminMenu) return;
+  if (!adminMenu.contains(e.target) && e.target !== adminBtn && !adminBtn.contains(e.target)) {
+    adminMenu.classList.remove('open');
+    adminBtn?.setAttribute('aria-expanded', 'false');
+  }
+});
+
+// Avatar helpers + Profile dropdown
+function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+function nameToInitials(s){
+  if(!s) return '??';
+  const parts = String(s).trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '??';
+  if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
+function initAvatars(){
+  document.querySelectorAll('.avatar').forEach(el=>{
+    const name = el.getAttribute('data-name') || el.textContent || '';
+    el.textContent = nameToInitials(name);
+    const hue = Math.abs(strHash(name)) % 360;
+    el.style.background = `hsl(${hue} 60% 35%)`;
+  });
+}
+document.addEventListener('DOMContentLoaded', initAvatars);
+
+const pBtn = document.getElementById('profileBtn');
+const pMenu = document.getElementById('profileMenu');
+pBtn?.addEventListener('click', (e)=>{
+  e.preventDefault();
+  pMenu?.classList.toggle('open');
+  pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+});
+document.addEventListener('click', (e)=>{
+  if(!pMenu) return;
+  if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+    pMenu.classList.remove('open');
+    pBtn?.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
+</body>
+</html>
+
+
+<!-- Vendor Manage Modal -->
+<div id="vendorModal" aria-hidden="true" style="position:fixed; inset:0; display:none; z-index:2000;">
+  <div style="position:absolute; inset:0; background:rgba(0,0,0,.45)"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="vendorModalTitle"
+       style="position:relative; max-width:720px; margin:60px auto; background:var(--surface); border:1px solid var(--line);
+              border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.45); overflow:hidden">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)">
+      <h3 id="vendorModalTitle" style="margin:0">Manage Vendor</h3>
+      <button id="vendorModalClose" class="btn" style="height:auto; padding:6px 10px">✕</button>
+    </div>
+    <form id="vendorForm" style="padding:16px; display:grid; gap:12px">
+      <input type="hidden" name="id" id="v_id">
+      <div>
+        <label>Vendor Name</label>
+        <input class="input" type="text" id="v_name" name="name" required>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+        <div>
+          <label>Phone</label>
+          <input class="input" type="tel" id="v_phone" name="phone" placeholder="(555) 123-4567" pattern="\(\d{3}\) \d{3}-\d{4}">
+        </div>
+        <div>
+          <label>Service Type</label>
+          <select class="input" id="v_service_type" name="service_type" required>
+            <option value="" disabled>Select a service type</option>
+            <option>Glass</option>
+            <option>Striping</option>
+            <option>Sensor</option>
+            <option>Alignment</option>
+            <option>Misc</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Address</label>
+        <textarea class="input" id="v_address" name="address" rows="2" placeholder="Street, City, State"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:12px; margin-top:8px">
+        <div style="display:flex; gap:8px">
+          <button class="btn primary" id="v_save" type="submit">Save changes</button>
+        </div>
+        <div>
+          <button class="btn" id="v_remove" type="button" style="border-color:var(--bad); color:#fff; background:var(--bad)">Remove</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Helpers to open/close modal
+const $ = (sel, ctx=document) => ctx.querySelector(sel);
+const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+
+function openVendorModal(){ const m = $('#vendorModal'); if(m){ m.style.display = 'block'; } }
+function closeVendorModal(){ const m = $('#vendorModal'); if(m){ m.style.display = 'none'; } }
+
+$('#vendorModalClose')?.addEventListener('click', (e)=>{ e.preventDefault(); closeVendorModal(); });
+$('#vendorModal')?.addEventListener('click', (e)=>{ if(e.target === e.currentTarget) closeVendorModal(); });
+
+// Parse/format utilities matching your description encoding
+function parseDescription(desc){
+  const out = { address:'', phone:'', service_type:'' };
+  if (!desc) return out;
+  desc.split(/\n+/).forEach(line => {
+    const [k, ...rest] = line.split(':');
+    const v = (rest.join(':') || '').trim();
+    const key = (k || '').trim().toLowerCase();
+    if (key === 'address') out.address = v;
+    if (key === 'phone') out.phone = v;
+    if (key.startsWith('service type')) out.service_type = v;
+  });
+  return out;
+}
+function buildDescription({address, phone, service_type}){
+  const parts = [];
+  if (address) parts.push(`Address: ${address}`);
+  if (phone) parts.push(`Phone: ${phone}`);
+  if (service_type) parts.push(`Service Type: ${service_type}`);
+  return parts.join('\n');
+}
+
+// Manage button -> open modal and fetch data
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-manage-id]');
+  if (!btn) return;
+  e.preventDefault();
+  const id = btn.getAttribute('data-manage-id');
+  try {
+    // Try to fetch JSON from a backend endpoint; if unavailable, hydrate from DOM description
+    let data = null;
+    try{
+      const res = await fetch(`/admin/vendor/${id}.json`, { headers: { 'X-Requested-With':'fetch' }});
+      if (res.ok) data = await res.json();
+    }catch(_){}
+
+    if (!data){
+      // Fallback: read from the DOM row
+      const row = btn.closest('.row');
+      const name = (row?.querySelector('strong')?.textContent || '').replace(/^Vendor:\s*/,'').trim();
+      const descText = row?.querySelector('.meta')?.innerText || '';
+      const parsed = parseDescription(descText);
+      data = { id, name, ...parsed, description: buildDescription(parsed) };
+    }
+
+    // Fill form
+    $('#v_id').value = data.id;
+    $('#v_name').value = (data.name || '').replace(/^Vendor:\s*/,'').trim();
+    $('#v_phone').value = data.phone || '';
+    $('#v_address').value = data.address || '';
+    $('#v_service_type').value = data.service_type || '';
+
+    openVendorModal();
+  } catch (err) {
+    console.error(err);
+    alert('Unable to load vendor details.');
+  }
+});
+
+// Save (update)
+$('#vendorForm')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = $('#v_id').value;
+  const payload = {
+    name: $('#v_name').value.trim(),
+    phone: $('#v_phone').value.trim(),
+    address: $('#v_address').value.trim(),
+    service_type: $('#v_service_type').value,
+  };
+  if (!payload.name || !payload.service_type){
+    alert('Name and Service Type are required.'); return;
+  }
+  try{
+    const res = await fetch(`/admin/vendor/${id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'X-Requested-With':'fetch' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    // Update the row in-place
+    const row = document.querySelector(`button[data-manage-id="${id}"]`)?.closest('.row');
+    if (row){
+      row.querySelector('strong').textContent = json.title || ('Vendor: ' + payload.name);
+      const meta = row.querySelector('.meta');
+      const desc = buildDescription(payload);
+      const descEl = meta.querySelector('div[style*="white-space:pre-wrap"]') || document.createElement('div');
+      descEl.style.marginTop = '6px';
+      descEl.style.color = '#cbd5e1';
+      descEl.style.whiteSpace = 'pre-wrap';
+      descEl.textContent = desc;
+      if (!descEl.parentNode) meta.appendChild(descEl);
+    }
+    closeVendorModal();
+  }catch(err){
+    console.error(err);
+    alert('Save failed.');
+  }
+});
+
+// Remove
+$('#v_remove')?.addEventListener('click', async ()=>{
+  const id = $('#v_id').value;
+  if (!confirm('Remove this vendor? This cannot be undone.')) return;
+  try{
+    const res = await fetch(`/admin/vendor/${id}/remove`, {
+      method: 'POST',
+      headers: { 'X-Requested-With':'fetch' }
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    // Remove from the list
+    const row = document.querySelector(`button[data-manage-id="${id}"]`)?.closest('.row');
+    const section = row?.closest('section.panel');
+    row?.remove();
+    // Decrement badge count
+    const badge = section?.querySelector('.badge');
+    if (badge){
+      const m = (badge.textContent||'').match(/\d+/);
+      if (m){
+        const n = Math.max(0, parseInt(m[0],10) - 1);
+        badge.textContent = badge.textContent.replace(/\d+/, String(n));
+      }
+    }
+    closeVendorModal();
+  }catch(err){
+    console.error(err);
+    alert('Remove failed.');
+  }
+});
+</script>
+
+</body>
+</html>

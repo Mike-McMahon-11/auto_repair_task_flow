@@ -1,0 +1,62 @@
+:root {
+    --bg: #f8f9fa;
+    --text: #212529;
+    --primary: #0d6efd;
+    --card: #ffffff;
+    --border: #dee2e6;
+}
+[data-theme="dark"] {
+    --bg: #1e1e1e;
+    --text: #e0e0e0;
+    --primary: #4da3ff;
+    --card: #2d2d2d;
+    --border: #444;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+}
+
+.topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo { font-weight: bold; font-size: 1.5rem; color: var(--primary); }
+
+nav a {
+    margin: 0 14px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+}
+nav a.active, nav a:hover { color: var(--primary); }
+
+.content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-primary { background: var(--primary); color: white; }

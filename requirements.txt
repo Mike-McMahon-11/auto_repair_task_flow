@@ -1,0 +1,4 @@
+Flask
+gunicorn
+flask-login
+werkzeug

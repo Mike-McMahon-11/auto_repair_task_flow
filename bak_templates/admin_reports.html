@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Reports</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+      --top-h:42px; --top-pad:6px 10px; --top-radius:10px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* --- Top bar (matches Daily Updates / Index) --- */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .top .inner > *:is(.logo, .tabs-top, .user) { height: var(--top-h); display:flex; align-items:center }
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:#cbd5e1; position:relative; font-weight:700; display:inline-flex; align-items:center; height:calc(var(--top-h) - 6px)}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:#cbd5e1; font-size:12px; height:calc(var(--top-h) - 6px)}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:6px 10px; border-radius:10px; font-weight:700; height:calc(var(--top-h) - 6px)}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:transparent; border:0; color:inherit; padding:6px 10px; border-radius:10px; height:calc(var(--top-h) - 6px)}
+    .dropdown-btn:hover{ background:rgba(255,255,255,0.06) }
+    :root[data-theme="light"] .dropdown-btn:hover{ background:rgba(0,0,0,0.06) }
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+
+    /* Subscription chip */
+    .sub-status{
+      display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip);
+      border-radius:999px; font-size:12px; color:#cbd5e1; height:calc(var(--top-h) - 6px)
+    }
+    .sub-status .dot{ width:8px; height:8px; border-radius:50%; background:var(--good) }
+    .sub-status.warn .dot{ background:var(--warn) }
+
+    /* Avatar & profile dropdown */
+    .avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; color:#fff; letter-spacing:.5px; user-select:none }
+    .profile{ position:relative }
+    .profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text); height:calc(var(--top-h) - 6px) }
+    .profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+    .profile-menu.open{ display:flex }
+    .profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+    .profile-menu a:last-child{ border-bottom:none }
+    .profile-menu a:hover{ background:var(--elev) }
+
+    /* Page body */
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{background:var(--elev)/* patched from dark translucency */; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:16px}
+    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    .input,select{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+    .btn.primary{background:#2563eb; border-color:#2563eb; color:#fff}
+
+    /* Light theme */
+    :root[data-theme="light"]{
+      --bg:#f6f7fb; --brand:#ffffff; --surface:#ffffff; --elev:#ffffff; --line:#94a3b8; --text:#0b1324; --muted:#334155; --accent:#7c3aed; --accent2:#2563eb;
+      --chip:#f8fafc; --chip-border:#cbd5e1;
+    }
+    :root[data-theme="light"] body{ background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:var(--text)}
+    :root[data-theme="light"] .panel{ background:#fff; border:1px solid var(--line); box-shadow:0 10px 28px rgba(15,23,42,.08) }
+    :root[data-theme="light"] .pill{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1 }
+    :root[data-theme="light"] .btn{ background:#111827; color:#fff; border:1px solid #111827 }
+
+    /* Report */
+    .table-wrap{ overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--surface) }
+    .table{ width:100%; border-collapse:separate; border-spacing:0 }
+    .table th, .table td{ padding:10px 12px; text-align:left; border-bottom:1px solid var(--line) }
+    .table thead th{ position:sticky; top:0; background:var(--elev); font-weight:800; user-select:none; cursor:pointer }
+    .table tbody tr:nth-child(odd){ background:rgba(255,255,255,0.02) }
+    .table tfoot td{ font-weight:800; background:var(--elev) }
+
+    .sort-ind { font-size:11px; opacity:.75; margin-left:6px }
+    .right { text-align:right }
+
+  
+:root[data-theme="light"] input[type="date"]{ color-scheme: light; }
+</style>
+<style>
+
+/* === Index-aligned Light Mode Overrides === */
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .user .btn,
+:root[data-theme="light"] .top .btn{
+  background:#111827; color:#ffffff; border:1px solid #111827;
+}
+:root[data-theme="light"] .tabs-top .tab-top{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .tabs-top .tab-top.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+:root[data-theme="light"] .dropdown .dropdown-btn,
+:root[data-theme="light"] .profile-btn{
+  color:var(--text);
+}
+/* Subtabs (where present) */
+:root[data-theme="light"] .subtabs .subtab{
+  color:#334155; background:#ffffff; border:1px solid var(--line);
+}
+:root[data-theme="light"] .subtabs .subtab.active{
+  color:#0b1324; outline:2px solid var(--accent2);
+}
+/* Ensure header pills and plan chip are readable */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  color:#334155;
+}
+/* Keep dropdown menus readable */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* === End Index-aligned Light Mode Overrides === */
+
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="dropdown tab-top" id="adminDropdown">
+          <button class="dropdown-btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a class="{{ 'active' if current_page=='admin_reports' else '' }}" href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem">Team</a>
+            <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set plan = (current_user.plan or 'free')|lower %}
+        {% set is_pro = current_user.is_authenticated and (plan != 'free') %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <section class="panel">
+        <h2 style="margin:0 0 10px">User Metrics</h2>
+        <form id="metricsForm">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <div><label>From</label><input class="input" type="date" name="start" required></div>
+            <div><label>To</label><input class="input" type="date" name="end" required></div>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end">
+            <button class="btn primary" type="submit">Run</button>
+          </div>
+        </form>
+        <div id="metricsOut" class="table-wrap" style="margin-top:12px"></div>
+        <div style="margin-top:8px; display:flex; justify-content:flex-end; gap:8px">
+          <button class="btn" id="dlCsvBtn" type="button" style="display:none">Download CSV</button>
+        </div>
+</section>
+
+      <section class="panel">
+        <h2 style="margin:0 0 10px">Other Reports</h2>
+        <p style="margin:0; color:var(--muted)">Coming soon.</p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Header menus + shop switch + avatar initials color
+    (function(){
+      const adminBtn = document.getElementById('adminBtn');
+      const adminMenu = document.getElementById('adminMenu');
+      adminBtn?.addEventListener('click', (e)=>{ e.preventDefault(); adminMenu?.classList.toggle('open'); });
+      document.addEventListener('click', (e)=>{ if(!e.target.closest('#adminDropdown')) adminMenu?.classList.remove('open'); });
+
+      document.getElementById('shopSelect')?.addEventListener('change', ()=>{ document.getElementById('shopSwitchForm')?.submit(); });
+
+      const av = document.querySelector('.avatar[data-name]');
+      if (av){
+        const name = (av.getAttribute('data-name')||'').trim();
+        const parts = name.split(/\\s+/);
+        const initials = (parts[0]?.[0]||'').toUpperCase() + (parts[1]?.[0]||'').toUpperCase();
+        av.textContent = initials || (name[0]||'U').toUpperCase();
+        let hash=0; for(let i=0;i<name.length;i++){ hash=((hash<<5)-hash)+name.charCodeAt(i); hash|=0; }
+        const hue = Math.abs(hash)%360;
+        av.style.background = `hsl(${hue} 70% 45%)`;
+      }
+
+      const profileBtn = document.getElementById('profileBtn');
+      const profileMenu = document.getElementById('profileMenu');
+      profileBtn?.addEventListener('click', (e)=>{ e.preventDefault(); profileMenu?.classList.toggle('open'); });
+      document.addEventListener('click', (e)=>{ if(!e.target.closest('.profile')) profileMenu?.classList.remove('open'); });
+    })();
+
+    // Reports form (table renderer + CSV + sorting)
+    (function(){
+      const form = document.getElementById('metricsForm');
+      const out  = document.getElementById('metricsOut');
+      const dl   = document.getElementById('dlCsvBtn');
+
+      let rows = [];
+      let sortKey = 'user';
+      let sortDir = 'asc'; // 'asc' | 'desc'
+
+      function emDashify(v){
+        if (v === null || v === undefined) return '—';
+        if (typeof v === 'string' && v.trim() === '') return '—';
+        return v;
+      }
+
+      function fmtHours(v){
+        if (v === null || v === undefined || v === '—') return '—';
+        const n = Number(v);
+        return Number.isFinite(n) ? n.toFixed(2) : '—';
+      }
+
+      function toCSV(data){
+        const header = ['User','Tasks','Avg Hours'];
+        const body = data.map(r => [
+          r.user,
+          String(r.tasks ?? ''),
+          String(r.avg_hours ?? '')
+        ]);
+        const all = [header, ...body];
+        return all.map(r => r.map(field => {
+          const f = String(field ?? '');
+          return /[",\n]/.test(f) ? `"${f.replace(/"/g, '""')}"` : f;
+        }).join(',')).join('\n');
+      }
+
+      function render(){
+        if (!rows || !rows.length){
+          out.innerHTML = `<div class="panel" style="border-radius:12px">No data for this range.</div>`;
+          dl.style.display = 'none';
+          return;
+        }
+
+        // Sort
+        const sorted = [...rows].sort((a,b)=>{
+          let A=a[sortKey], B=b[sortKey];
+          if (sortKey === 'tasks' || sortKey === 'avg_hours'){
+            A = (A===null||A===undefined) ? -Infinity : Number(A);
+            B = (B===null||B===undefined) ? -Infinity : Number(B);
+            if (Number.isNaN(A)) A = -Infinity;
+            if (Number.isNaN(B)) B = -Infinity;
+          } else {
+            A = String(A||'').toLowerCase();
+            B = String(B||'').toLowerCase();
+          }
+          const cmp = A < B ? -1 : A > B ? 1 : 0;
+          return sortDir === 'asc' ? cmp : -cmp;
+        });
+
+        // Totals (ignore em-dash for avg)
+        const totalTasks = sorted.reduce((s,r)=> s + (Number(r.tasks)||0), 0);
+        const avgHoursVals = sorted.map(r => Number(r.avg_hours)).filter(Number.isFinite);
+        const avgOfAvg = avgHoursVals.length ? (avgHoursVals.reduce((a,b)=>a+b,0) / avgHoursVals.length) : null;
+
+        const ind = (key) => sortKey===key ? `<span class="sort-ind">${sortDir==='asc'?'▲':'▼'}</span>` : '';
+
+        const rowsHtml = sorted.map(r => `
+          <tr>
+            <td>${emDashify(r.user)}</td>
+            <td class="right">${emDashify(r.tasks)}</td>
+            <td class="right">${fmtHours(emDashify(r.avg_hours))}</td>
+          </tr>
+        `).join('');
+
+        out.innerHTML = `
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-k="user">User ${ind('user')}</th>
+                <th data-k="tasks" class="right">Tasks ${ind('tasks')}</th>
+                <th data-k="avg_hours" class="right">Avg Hours ${ind('avg_hours')}</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+            <tfoot>
+              <tr>
+                <td>Total / Average</td>
+                <td class="right">${totalTasks}</td>
+                <td class="right">${avgOfAvg==null ? '—' : avgOfAvg.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+
+        // Header click to sort
+        out.querySelectorAll('th[data-k]').forEach(th=>{
+          th.addEventListener('click', ()=>{
+            const k = th.getAttribute('data-k');
+            if (sortKey === k){
+              sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
+            } else {
+              sortKey = k;
+              sortDir = (k === 'user') ? 'asc' : 'desc'; // sensible default
+            }
+            render();
+          });
+        });
+
+        // Enable CSV
+        dl.style.display = 'inline-flex';
+      }
+
+      async function runReport(fd){
+        out.innerHTML = '<div class="panel" style="border-radius:12px">Loading…</div>';
+        dl.style.display = 'none';
+        const qs = new URLSearchParams(fd).toString();
+        const res = await fetch('/api/reports/user-metrics?' + qs);
+        if (!res.ok){
+          out.innerHTML = '<div class="panel" style="border-radius:12px">Error loading report.</div>';
+          return;
+        }
+        // API returns JSON: { rows: [...] }
+        const data = await res.json().catch(()=>null);
+        rows = (data && Array.isArray(data.rows)) ? data.rows : [];
+        render();
+      }
+
+      form?.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        runReport(new FormData(form));
+      });
+
+      dl?.addEventListener('click', ()=>{
+        const csv = toCSV(rows || []);
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'user-metrics.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    })();
+
+  </script>
+
+<script>
+// Ensure page theme matches saved preference
+(() => {
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch(e) { /* ignore */ }
+})();
+</script>
+
+</body>
+</html>

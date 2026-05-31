@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Team</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar (consistent) */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:#0b1220}
+    .tabs-top{display:flex; gap:8px}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:#0f172a; color:#cbd5e1; font-weight:700}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:#0f172a; border-radius:999px; color:#cbd5e1; font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:#0f172a; color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+    .btn.primary{border-color:#334155}
+    .btn.ghost{background:transparent}
+    .btn.danger{border-color:#7f1d1d; color:#fecaca}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:#0f172a; border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+    .dropdown-menu a.active{background:var(--accent2); color:#fff}
+
+    /* Sub-status chip */
+    .sub-status{ display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip); border-radius:999px; font-size:12px; color:#cbd5e1;}
+    .sub-status .dot{ width:8px; height:8px; border-radius:50%; background:#10b981 }
+    .sub-status.warn .dot{ background:#f59e0b }
+
+    /* Page */
+    .inner{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .heading{display:flex; align-items:center; gap:12px; margin-bottom:10px}
+    .heading h1{margin:0; font-size:22px}
+    .heading .spacer{flex:1}
+
+    .notice{ margin:10px 0 16px; padding:12px; border:1px solid var(--line); background:#0b1220aa; backdrop-filter:blur(8px); border-radius:12px; }
+    .notice .title{ font-weight:800; color:#93c5fd; text-transform:uppercase; font-size:12px; letter-spacing:.4px; margin-bottom:6px }
+    .code{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; padding:2px 6px; border:1px solid var(--line); background:#0f172a; border-radius:6px }
+
+    /* Grid of user cards */
+    .grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px }
+    @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:700px){ .grid{grid-template-columns:1fr} }
+
+    .card{ position:relative; display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:14px; background:#0f172a; }
+    .toprow{ display:flex; align-items:center; gap:12px }
+    .avatar{ width:42px; height:42px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px }
+    .info{ min-width:0 }
+    .name{ font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .email{ color:#a3b2c6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .role{ margin-left:auto; }
+    .role .pill{ background:#0b1220; }
+
+    .actions{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px }
+    .actions .left{}
+    .actions .right{ margin-left:auto; }
+
+    /* Modal */
+    .modal-backdrop{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.55); z-index:70 }
+    .modal{ width:min(560px,calc(100% - 40px)); background:#0f172a; border:1px solid var(--line); border-radius:14px; padding:16px }
+    .modal h3{ margin:0 0 12px }
+    .modal .body{ display:flex; flex-direction:column; gap:10px }
+    label.desc{ font-size:12px; font-weight:800; color:#93c5fd; text-transform:uppercase; letter-spacing:.3px }
+    .input, select{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:#0b1220; color:var(--text) }
+
+    .foot{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
+  
+/* Avatar & profile dropdown */
+.avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none }
+.profile{ position:relative }
+.profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text) }
+.profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+.profile-menu.open{ display:flex }
+.profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+.profile-menu a:last-child{ border-bottom:none }
+.profile-menu a:hover{ background:var(--elev) }
+
+
+
+
+
+
+/* Keep the caret tight to label */
+.tabs-top .dropdown .dropdown-btn::after{ content:''; }
+
+
+/* === Light theme (refined v3): stronger greys, no text pills === */
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --brand:#ffffff;
+  --surface:#ffffff;
+  --elev:#ffffff;
+  --line:#94a3b8;         /* darker separators */
+  --text:#0b1324;         /* primary text */
+  --muted:#334155;        /* secondary text */
+  --accent:#7c3aed;       /* purple */
+  --accent2:#2563eb;      /* blue */
+  --good:#047857;
+  --warn:#b45309;
+  --bad:#b91c1c;
+  --chip:#f8fafc;
+  --chip-border:#cbd5e1;
+  --rail-pending:#fee2e2;
+  --rail-progress:#dbeafe;
+  --rail-done:#dcfce7;
+  --sla-gray:#cbd5e1;
+}
+:root[data-theme="light"] body{
+  background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+  color:var(--text);
+}
+:root[data-theme="light"] .top{ 
+  background:#ffffffcc; 
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+/* Tabs */
+:root[data-theme="light"] .tabs-top .tab-top{ color:#334155 }
+:root[data-theme="light"] .tabs-top .tab-top.active{ color:#0b1324; border-bottom:2px solid var(--accent2) }
+/* Panels & lists */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .dropdown-menu,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row{
+  background:#ffffff;
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+:root[data-theme="light"] .list .row:hover{ background:#f8fafc }
+/* Remove "pills" around plain text in light mode */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:transparent;
+  border:0;
+  padding:0;
+  color:var(--muted);
+}
+/* Buttons: keep action buttons dark for contrast */
+:root[data-theme="light"] .btn{ 
+  background:#111827; 
+  color:#fff; 
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+/* Admin dropdown button: treat like a tab (handled by global rule above) */
+:root[data-theme="light"] .dropdown .dropdown-btn{
+  background:transparent; border:0; color:inherit;
+}
+/* Inputs */
+:root[data-theme="light"] .input, 
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus{
+  outline:2px solid var(--accent2); border-color:transparent;
+}
+/* Dropdown menu links */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* Links */
+:root[data-theme="light"] a{ color:#2563eb }
+/* Avatar initials */
+:root[data-theme="light"] .avatar{ color:#ffffff }
+/* Alerts */
+:root[data-theme="light"] .alert{ border-color:#fecaca; background:#fff5f5; color:#7f1d1d }
+
+
+/* === Light-mode tweaks: assigned text & read/unread pills === */
+:root[data-theme="light"] .assigned{ color:#334155 } /* darker secondary text */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
+
+
+/* === Light-mode: preserve SLA colors & refine chips === */
+:root[data-theme="light"] .sla{
+  /* base: no background so colored states below can show */
+  background:transparent;
+  color:#0b1324;
+  border:1px solid #cbd5e1;
+}
+:root[data-theme="light"] .sla.gray{
+  background:#e2e8f0;      /* slate-200 */
+  color:#334155;           /* slate-700 */
+  border-color:#94a3b8;    /* slate-400 */
+}
+:root[data-theme="light"] .sla.yellow{
+  background:#fef3c7;      /* amber-100 */
+  color:#92400e;           /* amber-900 */
+  border-color:#f59e0b;    /* amber-500 */
+}
+:root[data-theme="light"] .sla.orange{
+  background:#ffedd5;      /* orange-100 */
+  color:#9a3412;           /* orange-900 */
+  border-color:#ea580c;    /* orange-600 */
+}
+:root[data-theme="light"] .sla.red{
+  background:#fee2e2;      /* red-100 */
+  color:#7f1d1d;           /* red-900 */
+  border-color:#dc2626;    /* red-600 */
+}
+:root[data-theme="light"] .sla.done{
+  background:#dcfce7;      /* emerald-100 */
+  color:#065f46;           /* emerald-900 */
+  border-color:#10b981;    /* emerald-500 */
+}
+
+/* Timestamp (initial time/date): no background, subtle grey text */
+:root[data-theme="light"] .created{
+  background:transparent;
+  border:0;
+  color:#64748b;           /* slate-500 */
+  padding:0;
+}
+
+/* Subtle comment history pill (like read/unread) */
+:root[data-theme="light"] .commentpill,
+:root[data-theme="light"] .comments-pill,
+:root[data-theme="light"] .commentsCount,
+:root[data-theme="light"] .comments-count{
+  background:#e0e7ff;      /* indigo-100 */
+  color:#1e3a8a;           /* indigo-900 */
+  border:1px solid #c7d2fe;/* indigo-200 */
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Assigned text: keep darker for readability */
+:root[data-theme="light"] .assigned{ color:#334155 }
+
+
+/* Header consistency: Admin dropdown matches other header buttons */
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:8px;
+  padding:8px 10px;
+  font-weight:700;
+  color:inherit;
+}
+.tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(0,0,0,0.06);
+}
+:root[data-theme="dark"] .tabs-top .dropdown .dropdown-btn:hover{
+  background:rgba(255,255,255,0.06);
+}
+
+
+/* Light-mode readability for password notice */
+:root[data-theme="light"] .notice{
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+  color:#0f172a;
+  box-shadow:0 8px 24px rgba(15,23,42,.06);
+}
+:root[data-theme="light"] .notice .title{ color:#1e293b }
+:root[data-theme="light"] .code{
+  background:#f8fafc;
+  border:1px solid #cbd5e1;
+  color:#0f172a;
+  border-radius:8px;
+}
+
+
+/* Admin Team: header buttons consistent + centered */
+.top .tabs-top .tab-top{ background:var(--elev) !important; }
+.tabs-top .tab-top{ display:inline-flex; align-items:center; justify-content:center; line-height:1.1 }
+
+
+/* === Compact header tabs === */
+.tabs-top .tab-top{
+  padding:4px 10px !important;
+  line-height:1.15 !important;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:10px;
+}
+.tabs-top .dropdown .dropdown-btn{
+  padding:4px 10px !important;
+  line-height:1.15 !important;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:10px;
+}
+
+
+
+/* === Header normalization (match index.html) === */
+:root{ --top-h:38px }
+
+.top .tabs-top .tab-top,
+.top .tabs-top .dropdown .dropdown-btn,
+.top .user .btn,
+.top .user .pill{
+  padding:8px 10px !important;
+  height:var(--top-h) !important;
+  line-height:calc(var(--top-h) - 16px) !important;
+  border-radius:8px !important;
+}
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  font-weight:700;
+  color:inherit;
+}
+
+/* Light header surface */
+:root[data-theme="light"] .top{
+  background:#ffffffcc;
+  border-bottom:1px solid var(--line);
+}
+
+
+/* === Unified Light Mode Surfaces === */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row,
+:root[data-theme="light"] .dropdown-menu{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+/* Inputs & form elements */
+:root[data-theme="light"] .input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus{
+  outline:2px solid var(--accent2);
+  border-color:transparent;
+}
+
+/* Pills & status chips */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Read/unread special cases */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; }
+:root[data-theme="light"] .readpill.is-read  { background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; }
+
+/* Buttons maintain contrast */
+:root[data-theme="light"] .btn{
+  background:#111827;
+  color:#ffffff;
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" {{ 'active' if current_page in ['recycle','admin_daily','admin_day_end','admin_reports','admin_vendor','admin_team'] else '' }} id="adminDropdown">
+          <button class="btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem" class="active">Team</a>
+            <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+{% if current_user.is_authenticated %}
+<div class="profile">
+  <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+    <div class="avatar" data-name="{{ current_user.username }}"></div>
+  </button>
+  <div class="profile-menu" id="profileMenu" role="menu">
+    <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+    <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+    <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+  </div>
+</div>
+{% else %}
+<a class="btn" href="{{ url_for('login') }}">Login</a>
+{% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <main class="inner">
+    <div class="heading">
+      <h1>Manage Users</h1>
+      <div class="spacer"></div>
+      {% if is_admin %}
+      <button class="btn primary" id="addUserBtn">Add User</button>
+      {% endif %}
+    </div>
+
+    <div class="notice">
+      <div class="title">Password Reset Notice</div>
+      <div>All technician passwords have been reset to <span class="code">{{ tech_reset_password or '******' }}</span> (unique per shop).</div>
+    </div>
+
+    <section class="grid" id="userGrid">
+      {% for u in users %}
+      <article class="card" data-user-id="{{ u.id }}" data-username="{{ u.username }}" data-email="{{ u.email }}" data-role="{{ (u.role or '')|lower }}">
+        <div class="toprow">
+          <div class="avatar" data-name="{{ u.username or u.email }}"></div>
+          <div class="info">
+            <div class="name" title="{{ u.username }}">{{ u.username }}</div>
+            <div class="email" title="{{ u.email }}">{{ u.email }}</div>
+          </div>
+          <div class="role">{% set role_key = (u.role or '')|lower %}<span class="pill">{{ role_labels.get(role_key, (u.role or '')|capitalize) }}</span></div>
+        </div>
+        <div class="actions">
+          <div class="left">
+            {% if is_admin %}
+            <button class="btn ghost" data-reset="{{ u.id }}">Reset password</button>
+            {% endif %}
+          </div>
+          <div class="right">
+            {% if is_admin %}
+            <button class="btn" data-edit="{{ u.id }}">Edit user</button>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+  </main>
+
+  <!-- Modal: Add/Edit user -->
+  <div class="modal-backdrop" id="userModalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+      <h3 id="userModalTitle">Add User</h3>
+      <form id="userForm" method="post" action="#">
+        <div class="body">
+          <div>
+            <label class="desc" for="uf_name">Name</label>
+            <input id="uf_name" name="username" class="input" placeholder="First Last" required />
+          </div>
+          <div>
+            <label class="desc" for="uf_email">Email</label>
+            <input id="uf_email" type="email" name="email" class="input" placeholder="name@example.com" required />
+          </div>
+          <div>
+            <label class="desc" for="uf_role">Role</label>
+            <select id="uf_role" name="role">
+              {% set role_options = roles or [('manager','Manager'),('csr','CSR'),('porter','Porter'),('tech','Tech')] %}
+{% for r in role_options %}
+  {% set value = (r[0] if (r is sequence and r|length>1) else r) %}
+  {% set label = (r[1] if (r is sequence and r|length>1) else r) %}
+  <option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="foot">
+          <button type="button" class="btn" id="userCancel">Cancel</button>
+          <button type="submit" class="btn primary" id="userSave">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Admin dropdown
+    const adminBtn = document.getElementById('adminBtn');
+    const adminMenu = document.getElementById('adminMenu');
+    adminBtn?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const open = adminMenu.classList.toggle('open');
+      adminBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', (e)=>{
+      if(!adminMenu) return;
+      if(!adminMenu.contains(e.target) && e.target !== adminBtn){
+        adminMenu.classList.remove('open');
+        adminBtn?.setAttribute('aria-expanded','false');
+      }
+    });
+
+    // Avatar initials + color
+    function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+    function nameToInitials(name){
+      const parts = (name||'').trim().split(/\s+/).filter(Boolean);
+      if(parts.length===0) return '??';
+      if(parts.length===1){ const p=parts[0]; return (p[0]||'?').toUpperCase() + (p[1]||'').toUpperCase(); }
+      return (parts[0][0]||'?').toUpperCase() + (parts[1][0]||'').toUpperCase();
+    }
+    document.querySelectorAll('.avatar').forEach(el=>{
+      const name = el.getAttribute('data-name') || '';
+      el.textContent = nameToInitials(name);
+      const hue = Math.abs(strHash(name)) % 360;
+      el.style.background = `hsl(${hue} 60% 35%)`;
+    });
+
+    // Modal wiring (add/edit)
+    const modal = document.getElementById('userModalBackdrop');
+    const form = document.getElementById('userForm');
+    const title = document.getElementById('userModalTitle');
+    const addBtn = document.getElementById('addUserBtn');
+    const cancelBtn = document.getElementById('userCancel');
+    let editingId = null;
+
+    function openModal(mode, payload){
+      modal.style.display='grid'; modal.setAttribute('aria-hidden','false');
+      if(mode==='add'){
+        editingId = null;
+        title.textContent = 'Add User';
+        form.action = "{{ url_for('admin_team_add_user') }}";
+        form.reset();
+        const roleSel = document.getElementById('uf_role');
+        if(roleSel) roleSel.value = 'csr';
+      }else{
+        editingId = payload.id;
+        title.textContent = 'Edit User';
+        form.action = `/admin/team/${payload.id}/update`;
+        document.getElementById('uf_name').value = payload.username || '';
+        document.getElementById('uf_email').value = payload.email || '';
+        document.getElementById('uf_role').value = payload.role || 'csr';
+      }
+    }
+    function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
+    addBtn?.addEventListener('click', ()=> openModal('add'));
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modal.style.display==='grid') closeModal(); });
+
+    // Edit buttons
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-edit]');
+      if(!btn) return;
+      const card = btn.closest('.card');
+      const payload = {
+        id: card.getAttribute('data-user-id'),
+        username: card.getAttribute('data-username'),
+        email: card.getAttribute('data-email'),
+        role: (card.getAttribute('data-role')||'')
+      };
+      openModal('edit', payload);
+    });
+
+    // Reset password (server returns JSON { new_password: "..." })
+    document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('[data-reset]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-reset');
+      if(!confirm('Reset password for this user?')) return;
+      const res = await fetch(`/admin/team/${id}/reset-password`, { method:'POST' });
+      if(res.ok){
+        const data = await res.json().catch(()=>({}));
+        const pwd = data.new_password || '(generated)';
+        alert(`New password: ${pwd}\nShare this with the user; they can change it after login.`);
+      }
+    });
+  </script>
+<script>
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-copy]');
+  if(!btn) return;
+  const txt = btn.getAttribute('data-copy') || '';
+  navigator.clipboard.writeText(txt).then(()=>{
+    btn.textContent = 'Copied!';
+    setTimeout(()=>{ btn.textContent = 'Copy'; }, 1200);
+  });
+});
+</script>
+<script>
+
+// Theme bootstrap
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved==='light' || saved==='dark'){
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
+
+// Avatar helpers (same as Team page)
+function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+function nameToInitials(s){
+  if(!s) return '??';
+  const parts = String(s).trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '??';
+  if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+  return (parts[0][0]||'?').toUpperCase() + (parts[1][0]||'?').toUpperCase();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.avatar').forEach(el=>{
+    const name = el.getAttribute('data-name') || el.textContent || '';
+    el.textContent = nameToInitials(name);
+    const hue = Math.abs(strHash(name)) % 360;
+    el.style.background = `hsl(${hue} 60% 35%)`;
+  });
+
+  // Profile dropdown wiring
+  const pBtn = document.getElementById('profileBtn');
+  const pMenu = document.getElementById('profileMenu');
+  pBtn?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    pMenu?.classList.toggle('open');
+    pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+  });
+  document.addEventListener('click', (e)=>{
+    if(!pMenu) return;
+    if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+      pMenu.classList.remove('open');
+      pBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+});
+
+</script>
+<script>
+
+/* Normalize .readpill styling by text content across all pages */
+(function(){
+  function applyState(el){
+    const t = (el.textContent||'').trim().toLowerCase();
+    if(t === 'unread'){
+      el.classList.add('is-unread');
+      el.classList.remove('is-read');
+    }else if(t === 'read'){
+      el.classList.add('is-read');
+      el.classList.remove('is-unread');
+    }else{
+      el.classList.remove('is-read','is-unread');
+    }
+  }
+  function wire(el){
+    applyState(el);
+    const mo = new MutationObserver(()=>applyState(el));
+    mo.observe(el, {childList:true, characterData:true, subtree:true});
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.readpill').forEach(wire);
+  });
+})();
+
+</script>
+</body>
+</html>

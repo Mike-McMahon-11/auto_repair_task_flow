@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Archive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+
+    [data-theme="light"] {
+      --bg:#f8fafc;
+      --brand:#ffffff;
+      --elev:#ffffff;
+      --surface:#ffffff;
+      --line:#e5e7eb;
+
+      --text:#0f172a;
+      --muted:#64748b;
+
+      --accent:#6d28d9;
+      --accent2:#3b82f6;
+
+      --good:#10b981;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+
+      --chip:#ffffff;
+      --chip-border:#e2e8f0;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      background:var(--bg);
+      font:14px/1.45 system-ui, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    [data-theme="dark"] body{
+      background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020);
+    }
+
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar - Exact same as working index.html */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid var(--line);}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:var(--text); position:relative; font-weight:700}
+    .tab-top.active{outline:2px solid var(--accent2); color:var(--text);}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:var(--text); font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+    .btn.danger{border-color:#7f1d1d; color:#fecaca}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+
+    /* Subscription */
+    .sub-status{display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip); border-radius:999px; font-size:12px; color:var(--text);}
+    .sub-status .dot{width:8px; height:8px; border-radius:50%; background:var(--good)}
+    .sub-status.warn .dot{background:var(--warn)}
+
+    /* Profile avatar & menu - exact from your working index */
+    .avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none }
+    .profile{ position:relative }
+    .profile-btn{ display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text) }
+    .profile-menu{ position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60 }
+    .profile-menu.open{ display:flex }
+    .profile-menu a{ padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line) }
+    .profile-menu a:last-child{ border-bottom:none }
+    .profile-menu a:hover{ background:var(--elev) }
+
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{
+      background:var(--surface);
+      backdrop-filter:blur(8px);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+    }
+    /* Archive subtabs */
+    .subtabs{display:flex; align-items:center; gap:18px; padding:0 6px; border-bottom:1px solid var(--line)}
+    .subtab{position:relative; padding:12px 2px; color:var(--muted); font-weight:800; cursor:pointer}
+    .subtab.active{color:var(--text);}
+    .subtab.active::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent2); border-radius:2px}
+
+    /* Filters */
+    .filters{display:flex; flex-wrap:wrap; gap:8px; padding:12px 6px}
+    .input, select{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+
+    /* Task list */
+    .list{display:flex; flex-direction:column; gap:10px; padding:12px 6px 0}
+    .row{position:relative; padding:14px 14px 14px 18px; border:1px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer}
+
+    .row-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+    .left-cluster{display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:230px}
+    .created{font-size:12px; color:var(--muted); background:none; border:none; border-radius:999px; padding:4px 8px}
+    .urgent-flag{width:22px; text-align:center; font-size:16px; line-height:1; opacity:.9}
+    .mid{flex:1; min-width:0}
+    .titleline{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .snippet{color:var(--muted); font-weight:500}
+    .assigned{margin-top:4px; color:var(--muted)}
+    .right-cluster{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+    .state{font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(16,185,129,.15); border-color:#065f46; color:#10b981}
+
+    [data-theme="light"] .state{
+      background:#dcfce7;
+      border-color:#86efac;
+      color:#166534;
+    }
+    /* Photo Gallery */
+    .photo-gallery{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+      gap:12px;
+      padding:16px;
+      background:var(--elev);
+      border:1px solid var(--line);
+      border-radius:14px;
+      min-height:300px;
+    }
+    .photo-item{
+      border:1px solid var(--line);
+      border-radius:10px;
+      overflow:hidden;
+      background:#111827;
+      aspect-ratio:1/1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+    .photo-item img{
+      max-width:100%;
+      max-height:100%;
+      object-fit:cover;
+    }
+    .photo-item:hover{box-shadow:0 0 0 3px var(--accent2);}
+
+    @media (max-width:700px){.tabs-top{display:none}}
+  </style>
+</head>
+<body>
+  {% set is_admin = (current_user.is_authenticated and current_user.role == 'admin') %}
+  {% set GK = group_keys|default({'estimators':'Estimators','parts':'Parts Coordinators','csr':'CSRs','tech_pool':'Techs (Pool)','porter':'Porters'}, true) %}
+  {% set kind = kind|default('requests') %}
+
+  <!-- Top bar - Exact same as your working index.html -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" id="adminDropdown">
+          <button class="btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}">Day End</a>
+            <a href="{{ url_for('admin_reports') }}">Reports</a>
+            <!--<a href="{{ url_for('admin_vendor_approvals') }}">Vendor Approvals</a>-->
+            <a href="{{ url_for('admin_team') }}">Team</a>
+            <a href="{{ url_for('recycle_bin') }}">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="panel" style="padding:0">
+      <!-- Archive Tabs -->
+      <nav class="subtabs" role="tablist" aria-label="Archive views">
+        <a class="subtab {{ 'active' if kind=='requests' else '' }}" href="{{ url_for('archive', kind='requests') }}" id="tab-requests">Completed Requests </a>
+        <a class="subtab {{ 'active' if kind=='photos' else '' }}" href="{{ url_for('archive', kind='photos') }}" id="tab-photos">All Uploaded Photos</a>
+      </nav>
+
+      <!-- Content -->
+      {% if kind == 'photos' %}
+        <div style="padding:20px;">
+          <h3 style="margin:0 0 16px; color:var(--text);">All Uploaded Photos</h3>
+          <div class="photo-gallery" id="allPhotos">
+            <div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:60px 20px;">Loading all photos from every task...</div>
+          </div>
+        </div>
+      {% else %}
+        <div style="padding:16px 20px 8px;">
+          <h3 style="margin:0 0 16px; color:var(--text);">Completed Requests <span class="badge" style="background:#1f2937; color:#e5e7eb; padding:4px 10px; border-radius:999px; font-size:13px;">{{ counts.requests if counts else 0 }}</span></h3>
+        </div>
+
+        <form class="filters" method="get" action="{{ url_for('archive') }}">
+          <input type="hidden" name="kind" value="{{ kind }}" />
+          <div style="flex:2 1 280px">
+            <input class="input" type="search" name="q" value="{{ q or '' }}" placeholder="Search title, description, assignee…" />
+          </div>
+          <div style="flex:1 1 200px">
+            <select name="assignee" class="input">
+              <option value="">— All assignees —</option>
+              <optgroup label="Users">
+                {% for u in shop_users or [] %}
+                  <option value="user:{{ u.username }}" {% if assignee=='user:' ~ u.username %}selected{% endif %}>{{ u.username }}</option>
+                {% endfor %}
+              </optgroup>
+              <optgroup label="Groups">
+                {% for key,label in (available_groups or GK).items() %}
+                  <option value="group:{{ key }}" {% if assignee=='group:' ~ key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </optgroup>
+            </select>
+          </div>
+          <div style="flex:0 0 auto">
+            <button class="btn" type="submit">Apply</button>
+          </div>
+        </form>
+
+        <div class="list">
+          {% for t in tasks %}
+          {% set snippet = (t.comments or t.description) %}
+          {% set assignee = t.assigned_to or (GK.get(t.assigned_group) if t.assigned_group else None) %}
+          <article class="row" data-task-id="{{ t.id }}" data-title="{{ t.title }}">
+            <div class="row-head">
+              <div class="left-cluster">
+                <span class="created">{{ t.created_at.strftime('%b %d, %I:%M %p') }}</span>
+                <span class="urgent-flag">{% if t.urgent %}🚨{% else %}&nbsp;{% endif %}</span>
+              </div>
+              <div class="mid">
+                <div class="titleline">{{ t.title }}{% if snippet %}<span class="snippet"> — {{ snippet|truncate(140, True) }}</span>{% endif %}</div>
+                <div class="assigned">Assigned to: {{ assignee or '—' }}</div>
+              </div>
+              <div class="right-cluster">
+                <span class="state">Complete</span>
+                <form method="post" action="{{ url_for('reopen_task', task_id=t.id) }}" onclick="event.stopPropagation()">
+                  <button class="btn inline" type="submit">Reopen</button>
+                </form>
+                {% if is_admin %}
+                <form method="post" action="{{ url_for('delete_task', task_id=t.id) }}" onsubmit="return confirm('Permanently delete this item?')">
+                  <button class="btn danger inline" type="submit">Delete</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+          {% else %}
+            <div style="padding:40px; text-align:center; color:var(--muted);">No completed requests yet.</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <script>
+
+    (function(){
+      const saved = localStorage.getItem('theme');
+      if(saved==='light' || saved==='dark'){
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    })();
+
+
+    // Load photos only on Photos tab
+    async function loadAllPhotos() {
+      const gallery = document.getElementById('allPhotos');
+      if (!gallery) return;
+      gallery.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:60px 20px;">Loading all photos from every task...</div>';
+
+      try {
+        const res = await fetch('/api/all-photos');
+        if (!res.ok) throw new Error();
+        const photos = await res.json();
+
+        if (photos.length === 0) {
+          gallery.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:60px 20px;">No photos uploaded yet.</div>';
+          return;
+        }
+
+        gallery.innerHTML = '';
+        photos.forEach(photo => {
+          const item = document.createElement('a');
+          item.href = photo.url;
+          item.target = '_blank';
+          item.className = 'photo-item';
+          const img = document.createElement('img');
+          img.src = photo.url;
+          img.alt = photo.filename || 'Photo';
+          item.appendChild(img);
+          gallery.appendChild(item);
+        });
+      } catch (e) {
+        gallery.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:60px 20px;">Could not load photos right now.</div>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentKind = urlParams.get('kind') || 'requests';
+
+      if (currentKind === 'photos') {
+        loadAllPhotos();
+      }
+
+      // Admin dropdown
+      const adminBtn = document.getElementById('adminBtn');
+      const adminMenu = document.getElementById('adminMenu');
+      adminBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        adminMenu.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (adminMenu && !adminMenu.contains(e.target) && e.target !== adminBtn) adminMenu.classList.remove('open');
+      });
+
+      // PROFILE BUTTON + AVATAR (this is what was missing)
+      const pBtn = document.getElementById('profileBtn');
+      const pMenu = document.getElementById('profileMenu');
+      pBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        pMenu?.classList.toggle('open');
+        pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+      });
+      document.addEventListener('click', (e) => {
+        if(!pMenu) return;
+        if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+          pMenu.classList.remove('open');
+          pBtn?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Avatar initials
+      function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+      function nameToInitials(s){
+        if(!s) return '??';
+        const parts = String(s).trim().split(/\s+/).filter(Boolean);
+        if(parts.length===0) return '??';
+        if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+        return (parts[0][0]||'?').toUpperCase() + (parts[1][0]||'?').toUpperCase();
+      }
+      document.querySelectorAll('.avatar').forEach(el => {
+        const name = el.getAttribute('data-name') || '';
+        el.textContent = nameToInitials(name);
+        const hue = Math.abs(strHash(name)) % 360;
+        el.style.background = `hsl(${hue} 60% 35%)`;
+      });
+    });
+  </script>
+</body>
+</html>

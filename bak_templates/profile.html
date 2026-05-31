@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Your Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:#93c5fd; text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{min-height:100%; display:grid; place-items:center; padding:24px}
+    .card{width:min(640px, 94vw); background:#0b1220cc; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .header{display:flex; align-items:center; gap:12px; margin-bottom:10px}
+    .avatar{ width:56px; height:56px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px }
+    .title{font-weight:800; font-size:20px}
+    .subtitle{color:var(--muted)}
+    .grid{display:grid; grid-template-columns:1fr; gap:16px; margin-top:12px}
+    label{display:block; margin:8px 0 6px; color:#cbd5e1; font-weight:700}
+    .input{width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:#000; color:#fff; padding:10px 14px; border-radius:12px; font-weight:800}
+    .section{border:1px solid var(--line); border-radius:14px; padding:14px; background:var(--surface)}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .note{color:var(--muted); font-size:12px}
+  
+
+
+/* Keep the caret tight to label */
+.tabs-top .dropdown .dropdown-btn::after{ content:''; }
+
+
+/* === Light theme (refined v3): stronger greys, no text pills === */
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --brand:#ffffff;
+  --surface:#ffffff;
+  --elev:#ffffff;
+  --line:#94a3b8;         /* darker separators */
+  --text:#0b1324;         /* primary text */
+  --muted:#334155;        /* secondary text */
+  --accent:#7c3aed;       /* purple */
+  --accent2:#2563eb;      /* blue */
+  --good:#047857;
+  --warn:#b45309;
+  --bad:#b91c1c;
+  --chip:#f8fafc;
+  --chip-border:#cbd5e1;
+  --rail-pending:#fee2e2;
+  --rail-progress:#dbeafe;
+  --rail-done:#dcfce7;
+  --sla-gray:#cbd5e1;
+}
+:root[data-theme="light"] body{
+  background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff);
+  color:var(--text);
+}
+:root[data-theme="light"] .top{ 
+  background:#ffffffcc; 
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+/* Tabs */
+:root[data-theme="light"] .tabs-top .tab-top{ color:#334155 }
+:root[data-theme="light"] .tabs-top .tab-top.active{ color:#0b1324; border-bottom:2px solid var(--accent2) }
+/* Panels & lists */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .dropdown-menu,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row{
+  background:#ffffff;
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+:root[data-theme="light"] .list .row:hover{ background:#f8fafc }
+/* Remove "pills" around plain text in light mode */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:transparent;
+  border:0;
+  padding:0;
+  color:var(--muted);
+}
+/* Buttons: keep action buttons dark for contrast */
+:root[data-theme="light"] .btn{ 
+  background:#111827; 
+  color:#fff; 
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+/* Admin dropdown button: treat like a tab (handled by global rule above) */
+:root[data-theme="light"] .dropdown .dropdown-btn{
+  background:transparent; border:0; color:inherit;
+}
+/* Inputs */
+:root[data-theme="light"] .input, 
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus{
+  outline:2px solid var(--accent2); border-color:transparent;
+}
+/* Dropdown menu links */
+:root[data-theme="light"] .dropdown-menu a{ color:var(--text) }
+:root[data-theme="light"] .dropdown-menu a:hover{ background:#f8fafc }
+/* Links */
+:root[data-theme="light"] a{ color:#2563eb }
+/* Avatar initials */
+:root[data-theme="light"] .avatar{ color:#ffffff }
+/* Alerts */
+:root[data-theme="light"] .alert{ border-color:#fecaca; background:#fff5f5; color:#7f1d1d }
+
+
+/* === Light-mode tweaks: assigned text & read/unread pills === */
+:root[data-theme="light"] .assigned{ color:#334155 } /* darker secondary text */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
+:root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
+
+
+
+/* === Header normalization (match index.html) === */
+:root{ --top-h:38px }
+
+.top .tabs-top .tab-top,
+.top .tabs-top .dropdown .dropdown-btn,
+.top .user .btn,
+.top .user .pill{
+  padding:8px 10px !important;
+  height:var(--top-h) !important;
+  line-height:calc(var(--top-h) - 16px) !important;
+  border-radius:8px !important;
+}
+.tabs-top .dropdown .dropdown-btn{
+  background:transparent !important;
+  border:0 !important;
+  font-weight:700;
+  color:inherit;
+}
+
+/* Light header surface */
+:root[data-theme="light"] .top{
+  background:#ffffffcc;
+  border-bottom:1px solid var(--line);
+}
+
+
+/* === Unified Light Mode Surfaces === */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .list .row,
+:root[data-theme="light"] .dropdown-menu{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+/* Inputs & form elements */
+:root[data-theme="light"] .input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select{
+  background:#ffffff;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus{
+  outline:2px solid var(--accent2);
+  border-color:transparent;
+}
+
+/* Pills & status chips */
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .status,
+:root[data-theme="light"] .sub-status{
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  padding:2px 8px;
+  font-weight:700;
+}
+
+/* Read/unread special cases */
+:root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; }
+:root[data-theme="light"] .readpill.is-read  { background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; }
+
+/* Buttons maintain contrast */
+:root[data-theme="light"] .btn{
+  background:#111827;
+  color:#ffffff;
+  border:1px solid #111827;
+}
+:root[data-theme="light"] .btn:hover{ filter:brightness(1.08) }
+
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card" aria-label="Your Profile">
+      <div class="header">
+        <div class="avatar" data-name="{{ current_user.username }}"></div>
+        <div>
+          <div class="title">{{ current_user.username }}</div>
+          <div class="subtitle">{{ current_user.email }}</div>
+        </div>
+      </div>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="note">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="section">
+        <form method="post" action="{{ url_for('profile') }}">
+          <div class="row">
+            <div>
+              <label for="username">Name</label>
+              <input id="username" name="username" class="input" type="text" value="{{ current_user.username }}" required />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input id="email" name="email" class="input" type="email" value="{{ current_user.email }}" />
+            </div>
+          </div>
+          <div style="margin-top:10px"><button class="btn" type="submit">Change Profile</button></div>
+        </form>
+      </div>
+
+      <div class="section" style="margin-top:12px">
+        <form method="post" action="{{ url_for('profile_password') }}">
+          <div class="row">
+            <div>
+              <label for="pw">Password</label>
+              <input id="pw" name="password" class="input" type="password" minlength="6" required />
+            </div>
+            <div>
+              <label for="pw2">Confirm Password</label>
+              <input id="pw2" name="password2" class="input" type="password" minlength="6" required />
+            </div>
+          </div>
+          <div style="margin-top:10px"><button class="btn" type="submit">Reset Password</button></div>
+        </form>
+      </div>
+
+      <div class="note" style="margin-top:12px"><a href="{{ url_for('index') }}">← Back to Dashboard</a></div>
+    </section>
+  </main>
+  <script>
+  
+// Theme bootstrap
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved==='light' || saved==='dark'){
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
+
+// Avatar helpers (same as Team page)
+function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+function nameToInitials(s){
+  if(!s) return '??';
+  const parts = String(s).trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '??';
+  if(parts.length===1) return (parts[0][0]||'?').toUpperCase();
+  return (parts[0][0]||'?').toUpperCase() + (parts[1][0]||'?').toUpperCase();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.avatar').forEach(el=>{
+    const name = el.getAttribute('data-name') || el.textContent || '';
+    el.textContent = nameToInitials(name);
+    const hue = Math.abs(strHash(name)) % 360;
+    el.style.background = `hsl(${hue} 60% 35%)`;
+  });
+
+  // Profile dropdown wiring
+  const pBtn = document.getElementById('profileBtn');
+  const pMenu = document.getElementById('profileMenu');
+  pBtn?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    pMenu?.classList.toggle('open');
+    pBtn.setAttribute('aria-expanded', String(pMenu?.classList.contains('open')));
+  });
+  document.addEventListener('click', (e)=>{
+    if(!pMenu) return;
+    if(!pMenu.contains(e.target) && e.target!==pBtn && !pBtn?.contains(e.target)){
+      pMenu.classList.remove('open');
+      pBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+});
+
+  </script>
+<script>
+
+/* Normalize .readpill styling by text content across all pages */
+(function(){
+  function applyState(el){
+    const t = (el.textContent||'').trim().toLowerCase();
+    if(t === 'unread'){
+      el.classList.add('is-unread');
+      el.classList.remove('is-read');
+    }else if(t === 'read'){
+      el.classList.add('is-read');
+      el.classList.remove('is-unread');
+    }else{
+      el.classList.remove('is-read','is-unread');
+    }
+  }
+  function wire(el){
+    applyState(el);
+    const mo = new MutationObserver(()=>applyState(el));
+    mo.observe(el, {childList:true, characterData:true, subtree:true});
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.readpill').forEach(wire);
+  });
+})();
+
+</script>
+</body>
+</html>

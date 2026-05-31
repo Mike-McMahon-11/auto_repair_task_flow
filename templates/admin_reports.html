@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Reports</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+
+    [data-theme="light"] {
+      --bg:#f8fafc;
+      --brand:#ffffff;
+      --elev:#ffffff;
+      --surface:#ffffff;
+      --line:#e5e7eb;
+
+      --text:#0f172a;
+      --muted:#64748b;
+
+      --accent:#6d28d9;
+      --accent2:#3b82f6;
+
+      --good:#10b981;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+
+      --rail-pending:#ef444433;
+      --rail-progress:#3b82f633;
+      --rail-done:#10b98133;
+
+      --chip:#ffffff;
+      --chip-border:#e2e8f0;
+
+      --sla-gray:#e5e7eb;
+    }
+
+    [data-theme="light"] .tab-top {
+      border:1px solid #64748b; /* darker outline */
+      background:#ffffff;
+    }
+
+    [data-theme="light"] .tab-top.active {
+      outline:2px solid var(--accent2);
+      color:#000;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar - exact same as working index/archive/day-end */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:var(--text); font-weight:700; position:relative}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:var(--text); font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0; font-weight:700}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+
+    /* Subscription pill */
+    .sub-status{display:inline-flex !important; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip); border-radius:999px; font-size:12px; color:var(--text);}
+    .sub-status .dot{width:8px; height:8px; border-radius:50%; background:var(--good)}
+
+    /* Profile */
+    .avatar{width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none}
+    .profile{position:relative}
+    .profile-btn{display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text)}
+    .profile-menu{position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60}
+    .profile-menu.open{display:flex}
+    .profile-menu a{padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line)}
+    .profile-menu a:last-child{border-bottom:none}
+    .profile-menu a:hover{background:var(--elev)}
+
+    /* Page content */
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{background:#0b1220aa; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:16px}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .input, select{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--elev); color:var(--text)}
+    .btn.primary{background:#2563eb; border-color:#2563eb; color:#fff}
+
+    .table-wrap{overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+    .table{width:100%; border-collapse:separate; border-spacing:0}
+    .table th, .table td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--line)}
+    .table thead th{position:sticky; top:0; background:var(--elev); font-weight:800; user-select:none; cursor:pointer}
+    .table tbody tr:nth-child(odd){background:rgba(255,255,255,0.02)}
+    .table tfoot td{font-weight:800; background:var(--elev)}
+
+    .sort-ind{font-size:11px; opacity:.75; margin-left:6px}
+    .right{text-align:right}
+
+    /* Light theme */
+    :root[data-theme="light"]{
+      --bg:#f6f7fb; --brand:#ffffff; --surface:#ffffff; --elev:#ffffff; --line:#94a3b8;
+      --text:#0b1324; --muted:#334155; --accent:#7c3aed; --accent2:#2563eb;
+      --chip:#f8fafc; --chip-border:#cbd5e1;
+    }
+    :root[data-theme="light"] body{background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:var(--text)}
+    :root[data-theme="light"] .panel{background:#fff; border:1px solid var(--line); box-shadow:0 10px 28px rgba(15,23,42,.08)}
+  </style>
+</head>
+<body>
+
+  <!-- Top bar - exact same as index/archive/day-end (profile + admin fixed) -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" id="adminDropdown">
+          <button class="dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}">Day End</a>
+            <a class="{{ 'active' if current_page=='admin_reports' else '' }}" href="{{ url_for('admin_reports') }}">Reports</a>
+            <!--<a href="{{ url_for('admin_vendor_approvals') }}">Vendor Approvals</a>-->
+            <a href="{{ url_for('admin_team') }}">Team</a>
+            <a href="{{ url_for('recycle_bin') }}">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <section class="panel">
+        <h2 style="margin:0 0 10px">User Metrics</h2>
+        <form id="metricsForm">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <div><label>From</label><input class="input" type="date" name="start" required></div>
+            <div><label>To</label><input class="input" type="date" name="end" required></div>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end">
+            <button class="btn primary" type="submit">Run</button>
+          </div>
+        </form>
+        <div id="metricsOut" class="table-wrap" style="margin-top:12px"></div>
+        <div style="margin-top:8px; display:flex; justify-content:flex-end; gap:8px">
+          <button class="btn" id="dlCsvBtn" type="button" style="display:none">Download CSV</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 style="margin:0 0 10px">Other Reports</h2>
+        <p style="margin:0; color:var(--muted)">Coming soon.</p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Consolidated scripts - profile + admin + avatar + shop switch (same as day-end)
+    document.addEventListener('DOMContentLoaded', () => {
+      // Profile dropdown (click anywhere on button including picture)
+      const pBtn = document.getElementById('profileBtn');
+      const pMenu = document.getElementById('profileMenu');
+      if (pBtn && pMenu) {
+        pBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          pMenu.classList.toggle('open');
+          pBtn.setAttribute('aria-expanded', pMenu.classList.contains('open'));
+        });
+        document.addEventListener('click', (e) => {
+          if (!pMenu.contains(e.target) && e.target !== pBtn) {
+            pMenu.classList.remove('open');
+            pBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Avatar coloring
+      function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+      function nameToInitials(s){
+        if(!s) return '??';
+        const parts = String(s).trim().split(/\s+/).filter(Boolean);
+        if(parts.length===0) return '??';
+        return (parts[0][0]||'?').toUpperCase() + (parts[1] ? (parts[1][0]||'?').toUpperCase() : '');
+      }
+      document.querySelectorAll('.avatar').forEach(el => {
+        const name = el.getAttribute('data-name') || '';
+        el.textContent = nameToInitials(name);
+        const hue = Math.abs(strHash(name)) % 360;
+        el.style.background = `hsl(${hue} 60% 35%)`;
+      });
+
+      // Admin dropdown
+      const adminBtn = document.getElementById('adminBtn');
+      const adminMenu = document.getElementById('adminMenu');
+      if (adminBtn && adminMenu) {
+        adminBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = adminMenu.classList.toggle('open');
+          adminBtn.setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', (e) => {
+          if (!adminMenu.contains(e.target) && e.target !== adminBtn) {
+            adminMenu.classList.remove('open');
+            adminBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Shop switch
+      const shopSel = document.getElementById('shopSelect');
+      const shopForm = document.getElementById('shopSwitchForm');
+      if (shopSel && shopForm) shopSel.addEventListener('change', () => shopForm.submit());
+    });
+
+    // Your existing reports logic (unchanged)
+    (function(){
+      const form = document.getElementById('metricsForm');
+      const out  = document.getElementById('metricsOut');
+      const dl   = document.getElementById('dlCsvBtn');
+
+      let rows = [];
+      let sortKey = 'user';
+      let sortDir = 'asc';
+
+      function emDashify(v){ return (v === null || v === undefined || v === '') ? '—' : v; }
+      function fmtHours(v){ return (v === null || v === undefined || v === '—') ? '—' : Number(v).toFixed(2); }
+
+      function toCSV(data){
+        const header = ['User','Tasks','Avg Hours'];
+        const body = data.map(r => [r.user, String(r.tasks||''), String(r.avg_hours||'')]);
+        return [header, ...body].map(r => r.map(f => /[",\n]/.test(f) ? `"${f.replace(/"/g,'""')}"` : f).join(',')).join('\n');
+      }
+
+      function render(){
+        if (!rows.length){
+          out.innerHTML = `<div class="panel" style="border-radius:12px">No data for this range.</div>`;
+          dl.style.display = 'none';
+          return;
+        }
+        // ... (your full render/sort logic stays exactly the same)
+        // I kept it untouched so nothing breaks
+        const sorted = [...rows].sort((a,b) => {
+          let A = a[sortKey], B = b[sortKey];
+          if (sortKey === 'tasks' || sortKey === 'avg_hours') {
+            A = Number(A)||-Infinity; B = Number(B)||-Infinity;
+          } else {
+            A = String(A||'').toLowerCase();
+            B = String(B||'').toLowerCase();
+          }
+          const cmp = A < B ? -1 : A > B ? 1 : 0;
+          return sortDir === 'asc' ? cmp : -cmp;
+        });
+
+        const totalTasks = sorted.reduce((s,r)=> s + (Number(r.tasks)||0), 0);
+        const avgHoursVals = sorted.map(r => Number(r.avg_hours)).filter(Number.isFinite);
+        const avgOfAvg = avgHoursVals.length ? (avgHoursVals.reduce((a,b)=>a+b,0) / avgHoursVals.length) : null;
+
+        const ind = (key) => sortKey===key ? `<span class="sort-ind">${sortDir==='asc'?'▲':'▼'}</span>` : '';
+
+        const rowsHtml = sorted.map(r => `
+          <tr>
+            <td>${emDashify(r.user)}</td>
+            <td class="right">${emDashify(r.tasks)}</td>
+            <td class="right">${fmtHours(emDashify(r.avg_hours))}</td>
+          </tr>
+        `).join('');
+
+        out.innerHTML = `
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-k="user">User ${ind('user')}</th>
+                <th data-k="tasks" class="right">Tasks ${ind('tasks')}</th>
+                <th data-k="avg_hours" class="right">Avg Hours ${ind('avg_hours')}</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+            <tfoot>
+              <tr>
+                <td>Total / Average</td>
+                <td class="right">${totalTasks}</td>
+                <td class="right">${avgOfAvg==null ? '—' : avgOfAvg.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+
+        out.querySelectorAll('th[data-k]').forEach(th => {
+          th.addEventListener('click', () => {
+            const k = th.getAttribute('data-k');
+            if (sortKey === k) sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
+            else { sortKey = k; sortDir = (k === 'user') ? 'asc' : 'desc'; }
+            render();
+          });
+        });
+
+        dl.style.display = 'inline-flex';
+      }
+
+      async function runReport(fd){
+        out.innerHTML = '<div class="panel" style="border-radius:12px">Loading…</div>';
+        dl.style.display = 'none';
+        const qs = new URLSearchParams(fd).toString();
+        const res = await fetch('/api/reports/user-metrics?' + qs);
+        if (!res.ok) {
+          out.innerHTML = '<div class="panel" style="border-radius:12px">Error loading report.</div>';
+          return;
+        }
+        const data = await res.json().catch(()=>null);
+        rows = (data && Array.isArray(data.rows)) ? data.rows : [];
+        render();
+      }
+
+      form?.addEventListener('submit', (e)=>{ e.preventDefault(); runReport(new FormData(form)); });
+
+      dl?.addEventListener('click', ()=>{
+        const csv = toCSV(rows || []);
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'user-metrics.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    })();
+
+    // Theme bootstrap
+    (function(){
+      const saved = localStorage.getItem('theme');
+      if(saved==='light' || saved==='dark'){
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    })();
+  </script>
+</body>
+</html>

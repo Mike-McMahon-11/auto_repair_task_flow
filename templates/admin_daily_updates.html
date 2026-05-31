@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Daily Updates</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+
+    [data-theme="light"] {
+      --bg:#f8fafc;
+      --brand:#ffffff;
+      --elev:#ffffff;
+      --surface:#ffffff;
+      --line:#e5e7eb;
+
+      --text:#0f172a;
+      --muted:#64748b;
+
+      --accent:#6d28d9;
+      --accent2:#3b82f6;
+
+      --good:#10b981;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+
+      --rail-pending:#ef444433;
+      --rail-progress:#3b82f633;
+      --rail-done:#10b98133;
+
+      --chip:#ffffff;
+      --chip-border:#e2e8f0;
+
+      --sla-gray:#e5e7eb;
+    }
+
+    [data-theme="light"] .tab-top {
+      border:1px solid #64748b; /* darker outline */
+      background:#ffffff;
+    }
+
+    [data-theme="light"] .tab-top.active {
+      outline:2px solid var(--accent2);
+      color:#000;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar - exact same as all other pages */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid var(--line);}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:var(--text); position:relative; font-weight:700;}
+    .tab-top.active{outline:2px solid var(--accent2); color:var(--text);}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:var(--text); font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+    .btn.danger{border-color:#7f1d1d; color:#fecaca}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+
+    /* Subscription */
+    .sub-status{display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip); border-radius:999px; font-size:12px; color:var(--text);}
+    .sub-status .dot{width:8px; height:8px; border-radius:50%; background:var(--good)}
+    .sub-status.warn .dot{background:var(--warn)}
+    
+    /* Profile */
+    .avatar{width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none}
+    .profile{position:relative}
+    .profile-btn{display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text)}
+    .profile-menu{position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60}
+    .profile-menu.open{display:flex}
+    .profile-menu a{padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line)}
+    .profile-menu a:last-child{border-bottom:none}
+    .profile-menu a:hover{background:var(--elev)}
+
+    /* Page content */
+    .inner{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .panel{background:#0b1220aa; backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:14px}
+
+    .tabs{display:flex; align-items:center; gap:18px; padding:0 6px; border-bottom:1px solid var(--line)}
+    .tab{position:relative; padding:12px 2px; color:var(--text); font-weight:800}
+    .tab.active{color:var(--text)}
+    .tab.active::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent2); border-radius:2px}
+
+    .list{display:flex; flex-direction:column; gap:10px; padding:12px 6px 0}
+    .row{position:relative; padding:12px 12px; border:1px solid var(--line); border-radius:12px; background:var(--elev); cursor:pointer}
+    .row.user-panel{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .row.user-panel .title{font-weight:800}
+    .row.user-panel .chev{margin-left:auto; transition:transform .18s ease}
+    .row.user-panel.expanded .chev{transform:rotate(180deg)}
+
+    .qrow{display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--line); background:#0f172a; border-radius:10px;}
+    .qrow .spacer{flex:1}
+    .replies-count{color:var(--accent2); font-weight:700; cursor:pointer; text-decoration:none}
+    .replies-count:hover{text-decoration:underline}
+
+    .form-grid{display:grid; grid-template-columns:220px 1fr auto; gap:12px; align-items:start}
+    .textarea{min-height:90px; resize:vertical}
+    .helper{font-size:12px; color:#a3b2c6; margin-top:4px}
+
+    .input, select, textarea{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--elev); color:var(--text)}
+
+    .modal-backdrop{position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.55); z-index:70}
+    .modal{width:min(640px,calc(100% - 40px)); background:var(--elev); border:1px solid var(--line); border-radius:14px; padding:16px}
+    .modal h3{margin:0 0 12px}
+
+    @media (max-width:1200px){.user{display:none}}
+    @media (max-width:700px){
+      .tabs-top{display:none}
+      .form-grid{grid-template-columns:1fr;}
+    }
+
+    /* Light theme */
+
+    :root[data-theme="light"] body{background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:var(--text);}
+
+
+    /* 🌞 LIGHT MODE - Daily Updates */
+
+    [data-theme="light"] .panel {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+
+    [data-theme="light"] .panel-header {
+      color: #111827;
+    }
+
+    [data-theme="light"] .question-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
+    [data-theme="light"] .question-body {
+      color: #374151;
+    }
+
+    [data-theme="light"] .reply {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    [data-theme="light"] .reply-input {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #111827;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Top bar - copied exactly from your good index.html -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" id="adminDropdown">
+          <button class="btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}">Day End</a>
+            <a href="{{ url_for('admin_reports') }}">Reports</a>
+            <!--<a href="{{ url_for('admin_vendor_approvals') }}">Vendor Approvals</a>-->
+            <a href="{{ url_for('admin_team') }}">Team</a>
+            <a href="{{ url_for('recycle_bin') }}">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Your Daily Updates content (unchanged) -->
+  <main class="inner">
+    <h1 style="margin:0 0 4px">Daily Updates</h1>
+    <div style="color:#93c5fd; margin:0 0 14px">Create and monitor daily questions for your technical team members</div>
+
+    <nav class="tabs" style="margin:6px 0 16px">
+      <a class="tab {{ 'active' if request.args.get('tab','active')=='active' else '' }}" href="{{ url_for('admin_daily_updates') }}?tab=active">Active Questions</a>
+      <a class="tab {{ 'active' if request.args.get('tab')=='add' else '' }}" href="{{ url_for('admin_daily_updates') }}?tab=add">Add Questions</a>
+    </nav>
+
+    {% if request.args.get('tab','active') == 'active' %}
+    <section class="list" id="activeList">
+      {% if not panels %}
+        <div class="row" style="justify-content:center; opacity:.8">No active questions.</div>
+      {% endif %}
+      {% for p in panels %}
+        <article class="row user-panel" data-user-id="{{ p.user_id }}" tabindex="0" aria-expanded="false" aria-controls="q_for_user_{{ p.user_id }}">
+          <div class="title">{{ p.username }}</div>
+          <span class="sla gray">{{ p.count }} questions</span>
+          <span class="chev">▾</span>
+        </article>
+        <div class="accordion-wrap" id="q_for_user_{{ p.user_id }}" hidden>
+          <div class="accordion-body">
+            {% for q in p.questions %}
+              <div class="qrow" data-question-id="{{ q.id }}">
+                <div style="min-width:0; max-width:70%">
+                  <div class="question-title">Question {{ loop.index }}</div>
+                  <div class="question-body">{{ q.body }}</div>
+                  <div class="replies-line">
+                    <a class="replies-count" data-open-replies="{{ q.id }}" href="javascript:void(0)" data-n="{{ q.replies_rel|length if q.replies_rel is defined else 0 }}">
+                      {{ (q.replies_rel|length if q.replies_rel is defined else 0) }} replies
+                    </a>
+                  </div>
+                </div>
+                <div class="spacer"></div>
+                <span class="created">{{ (q.created_at.strftime('%m/%d/%Y') if q.created_at else '') }}</span>
+                {% if is_admin %}
+                <form method="post" action="{{ url_for('delete_daily_question', qid=q.id) }}" style="margin:0">
+                  <button class="btn delbtn danger" type="submit">Delete</button>
+                </form>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if request.args.get('tab') == 'add' %}
+    <section class="panel">
+      <h2 style="margin:0 0 12px">Add Question</h2>
+      <form method="post" action="{{ url_for('create_daily_question') }}" id="addQForm">
+        <div class="form-grid">
+          <label>
+            <div class="desc-label">User</div>
+            <select name="user_id" required>
+              <option value="">Select a user…</option>
+              {% for u in add_users %}
+                <option value="{{ u.id }}">{{ u.username }}</option>
+              {% endfor %}
+            </select>
+            <div class="helper">Choose who this question is for.</div>
+          </label>
+          <label>
+            <div class="desc-label">Question</div>
+            <textarea class="textarea" name="body" placeholder="Type your question…" required maxlength="500"></textarea>
+            <div class="helper"><span id="charCount">0</span>/500</div>
+          </label>
+          <div style="display:flex; align-items:flex-start; gap:8px; padding-top:22px">
+            <button class="btn primary" type="submit" id="createBtn" disabled>Create</button>
+          </div>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+  </main>
+
+  <!-- Reply modal -->
+  <div class="modal-backdrop" id="rdBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Question replies">
+      <h3 id="rdTitle">Question</h3>
+      <div class="body">
+        <div class="desc-label">Question</div>
+        <div class="desc-box" id="rdDesc">—</div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="desc-label">Replies</div>
+        <div id="rdComments" style="max-height:30vh; overflow:auto; padding-right:4px"></div>
+        <form id="rdForm">
+          <input class="input" id="rdNew" name="body" placeholder="Write a reply…" autocomplete="off" />
+          <button class="btn" type="submit">Reply</button>
+        </form>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px; justify-content:flex-end">
+        <button class="btn" id="rdClose" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+     <script>
+
+      (function(){
+      const saved = localStorage.getItem('theme');
+      if(saved==='light' || saved==='dark'){
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    })();
+
+    // Consolidated scripts - this is what finally made profile dropdown work on archive.html
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // === PROFILE DROPDOWN (this is the critical part) ===
+      const pBtn = document.getElementById('profileBtn');
+      const pMenu = document.getElementById('profileMenu');
+      if (pBtn && pMenu) {
+        pBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          pMenu.classList.toggle('open');
+          pBtn.setAttribute('aria-expanded', String(pMenu.classList.contains('open')));
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!pMenu.contains(e.target) && e.target !== pBtn && !pBtn.contains(e.target)) {
+            pMenu.classList.remove('open');
+            pBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Avatar coloring
+      function strHash(s) {
+        let h = 0;
+        for (let i = 0; i < s.length; i++) {
+          h = ((h << 5) - h) + s.charCodeAt(i);
+          h |= 0;
+        }
+        return h;
+      }
+      function nameToInitials(s) {
+        if (!s) return '??';
+        const parts = String(s).trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return '??';
+        return (parts[0][0] || '?').toUpperCase() + (parts[1] ? (parts[1][0] || '?').toUpperCase() : '');
+      }
+      document.querySelectorAll('.avatar').forEach(el => {
+        const name = el.getAttribute('data-name') || '';
+        el.textContent = nameToInitials(name);
+        const hue = Math.abs(strHash(name)) % 360;
+        el.style.background = `hsl(${hue} 60% 35%)`;
+      });
+
+      // Admin dropdown
+      const adminBtn = document.getElementById('adminBtn');
+      const adminMenu = document.getElementById('adminMenu');
+      if (adminBtn && adminMenu) {
+        adminBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = adminMenu.classList.toggle('open');
+          adminBtn.setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', (e) => {
+          if (!adminMenu.contains(e.target) && e.target !== adminBtn) {
+            adminMenu.classList.remove('open');
+            adminBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Shop switch
+      const shopSel = document.getElementById('shopSelect');
+      const shopForm = document.getElementById('shopSwitchForm');
+      if (shopSel && shopForm) {
+        shopSel.addEventListener('change', () => shopForm.submit());
+      }
+    });
+
+    // Your Daily Updates page scripts (accordion + form)
+    (function(){
+      const form = document.getElementById('addQForm');
+      if (!form) return;
+      const body = form.querySelector('textarea[name="body"]');
+      const count = document.getElementById('charCount');
+      const btn = document.getElementById('createBtn');
+      const update = () => {
+        count.textContent = String(body.value.length);
+        btn.disabled = !(form.user_id.value && body.value.trim().length);
+      };
+      form.addEventListener('input', update);
+      form.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !btn.disabled) form.submit();
+      });
+      update();
+    })();
+
+    document.addEventListener('click', (e) => {
+      const up = e.target.closest('.user-panel');
+      if (!up) return;
+      const id = up.getAttribute('data-user-id');
+      const wrap = document.getElementById('q_for_user_' + id);
+      const expanded = up.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        up.setAttribute('aria-expanded', 'false');
+        up.classList.remove('expanded');
+        wrap.hidden = true;
+      } else {
+        up.setAttribute('aria-expanded', 'true');
+        up.classList.add('expanded');
+        wrap.hidden = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Collision Repair Workflow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --text: #212529;
+            --primary: #0d6efd;
+            --card: #ffffff;
+        }
+        [data-theme="dark"] {
+            --bg: #1e1e1e;
+            --text: #e0e0e0;
+            --primary: #4da3ff;
+            --card: #2d2d2d;
+        }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; margin: 0; }
+        .topbar {
+            background: var(--card); border-bottom: 1px solid #dee2e6; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-weight: bold; font-size: 1.4rem; color: var(--primary); }
+        nav a { margin: 0 12px; text-decoration: none; color: var(--text); font-weight: 500; }
+        nav a.active, nav a:hover { color: var(--primary); }
+        .user-menu { display: flex; align-items: center; gap: 12px; }
+        .content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        button, .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+    </style>
+</head>
+<body data-theme="light">
+    <header class="topbar">
+        <div class="logo">TaskFlow</div>
+        
+        <nav>
+            <a href="{{ url_for('index') }}" class="{% if current_page == 'requests' %}active{% endif %}">Requests</a>
+            <a href="{{ url_for('archive') }}" class="{% if current_page == 'archive' %}active{% endif %}">Archive</a>
+            {% if current_user.role == 'admin' %}
+            <div class="dropdown">
+                <a href="#">Admin ▾</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
+                    <a href="{{ url_for('admin_day_end') }}">Day End</a>
+                    <a href="{{ url_for('admin_reports') }}">Reports</a>
+                    <a href="{{ url_for('admin_team') }}">Team</a>
+                    <a href="{{ url_for('recycle_bin') }}">Recycle Bin</a>
+                </div>
+            </div>
+            {% endif %}
+        </nav>
+
+        <div class="shop-info">
+            {{ shop.name if shop else 'Collision Repair Shop' }}
+        </div>
+
+        <div class="user-menu">
+            {% if current_user.is_authenticated %}
+                <span>{{ current_user.username }}</span>
+                <a href="{{ url_for('profile') }}">Profile</a>
+                <button id="theme-toggle">🌙</button>
+                <a href="{{ url_for('logout') }}">Sign out</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_modals %}{% endblock %}
+
+    <script>
+        const toggle = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', currentTheme);
+        toggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+
+        toggle.addEventListener('click', () => {
+            let theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,180 @@
+<div id="adminHeader" class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='sublets' else '' }}" href="{{ url_for('sublets_assigned') }}">Sublets</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" {{ 'active' if current_page in ['recycle','admin_daily','admin_day_end','admin_reports','admin_vendor','admin_team'] else '' }} id="adminDropdown">
+          <button class="btn dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}" role="menuitem">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}" role="menuitem">Day End</a>
+            <a href="{{ url_for('admin_reports') }}" role="menuitem">Reports</a>
+            <a href="{{ url_for('admin_vendor_approvals') }}" role="menuitem">Vendor Approvals</a>
+            <a href="{{ url_for('admin_team') }}" role="menuitem">Team</a>
+                      <a class="{{ 'active' if current_page=='recycle' else '' }}" href="{{ url_for('recycle_bin') }}" role="menuitem">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+{% if current_user.is_authenticated %}
+<div class="profile">
+  <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+    <div class="avatar" data-name="{{ current_user.username }}"></div>
+  </button>
+  <div class="profile-menu" id="profileMenu" role="menu">
+    <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+    <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+    <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+  </div>
+</div>
+{% else %}
+<a class="btn" href="{{ url_for('login') }}">Login</a>
+{% endif %}
+
+      </div>
+    </div>
+  </div>
+
+<style id="header-scope">
+/* Scoped header normalization */
+#adminHeader{ --top-h:42px; --top-pad:6px 10px; --top-radius:10px; }
+#adminHeader .inner{ display:flex; align-items:center; gap:14px; }
+#adminHeader .tabs-top .tab-top{
+  display:inline-flex; align-items:center; gap:8px;
+  height:calc(var(--top-h) - 6px) !important; padding:var(--top-pad) !important;
+  border:1px solid var(--line) !important; border-radius:var(--top-radius) !important;
+  font-weight:700; text-decoration:none;
+}
+#adminHeader .tabs-top .tab-top.active{ outline:2px solid var(--accent2); color:#fff; }
+:root[data-theme="light"] #adminHeader .tabs-top .tab-top.active{ color:#111827; }
+#adminHeader .tabs-top .dropdown{ position:relative; }
+#adminHeader .tabs-top .dropdown .dropdown-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  height:calc(var(--top-h) - 6px) !important; padding:var(--top-pad) !important;
+  border-radius:var(--top-radius) !important; background:transparent; border:0; cursor:pointer;
+}
+#adminHeader .tabs-top .dropdown .dropdown-menu{
+  position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+  background:var(--surface); border:1px solid var(--line) !important; border-radius:10px; overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:1000;
+}
+#adminHeader .tabs-top .dropdown .dropdown-menu.open{ display:block; }
+#adminHeader .tabs-top .dropdown .dropdown-menu a{ display:block; padding:10px 12px; color:var(--text); text-decoration:none; }
+#adminHeader .tabs-top .dropdown .dropdown-menu a:hover{ background:var(--accent2); color:#fff; }
+#adminHeader .user{ display:flex; align-items:center; gap:10px; height:var(--top-h); }
+#adminHeader .user .pill, #adminHeader .user .btn, #adminHeader .user .profile-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  height:calc(var(--top-h) - 6px) !important; padding:var(--top-pad) !important; border-radius:var(--top-radius) !important;
+}
+#adminHeader .profile{ position:relative; }
+#adminHeader .profile .profile-menu{
+  position:absolute; top:calc(100% + 6px); right:0; min-width:190px;
+  background:var(--surface); border:1px solid var(--line) !important; border-radius:10px; overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:1000;
+}
+#adminHeader .profile .profile-menu.open{ display:block; }
+#adminHeader .avatar{
+  width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; color:#fff; user-select:none;
+}
+
+/* overflow fix */
+#adminHeader .tabs-top{ overflow: visible !important; position: relative; z-index: 1500; }
+#adminHeader .tabs-top .dropdown{ overflow: visible !important; position: relative; z-index: 1600; }
+#adminHeader .profile{ position: relative; z-index: 1600; }
+#adminHeader .tabs-top .dropdown .dropdown-menu,
+#adminHeader .profile .profile-menu{ z-index: 3000 !important; }
+
+</style>
+
+
+
+<script id="header-boot">
+(function(){
+  const $ = (sel, ctx=document) => ctx.querySelector(sel);
+
+  // Normalize button types to avoid unwanted form submission
+  const adminBtn = $('#adminBtn');
+  const profileBtn = $('#profileBtn');
+  [adminBtn, profileBtn].forEach(b => { if (b && b.tagName === 'BUTTON') b.type = 'button'; });
+
+  // Delegated click handling ensures it works even if other scripts run earlier/later
+  function toggle(el){ el?.classList.toggle('open'); }
+  function close(el){ el?.classList.remove('open'); }
+
+  document.addEventListener('click', function(e){
+    const aBtn = e.target.closest('#adminBtn');
+    const pBtn = e.target.closest('#profileBtn');
+
+    if (aBtn){
+      e.preventDefault(); e.stopPropagation();
+      toggle($('#adminMenu'));
+      close($('#profileMenu'));
+      return;
+    }
+    if (pBtn){
+      e.preventDefault(); e.stopPropagation();
+      toggle($('#profileMenu'));
+      close($('#adminMenu'));
+      return;
+    }
+
+    // Clicks inside menus should not close them; outside should close both
+    if (!e.target.closest('#adminDropdown')) close($('#adminMenu'));
+    if (!e.target.closest('.profile')) close($('#profileMenu'));
+  }, true); // capture to beat other listeners
+
+  // Shop switcher
+  const shopSel = $('#shopSelect');
+  if (shopSel && !shopSel._bound){
+    shopSel.addEventListener('change', ()=>{ $('#shopSwitchForm')?.submit(); }, {capture:true});
+    shopSel._bound = true;
+  }
+
+  // Avatar fallback if empty
+  const av = $('#adminHeader .avatar[data-name]');
+  if (av && !av.textContent.trim()){
+    const name = (av.getAttribute('data-name')||'').trim();
+    const parts = name.split(/\s+/);
+    const initials = (parts[0]?.[0]||'').toUpperCase() + (parts[1]?.[0]||'').toUpperCase();
+    av.textContent = initials || (name[0]||'U').toUpperCase();
+    let hash=0; for(let i=0;i<name.length;i++){ hash=((hash<<5)-hash)+name.charCodeAt(i); hash|=0; }
+    const hue = Math.abs(hash)%360;
+    av.style.background = `hsl(${hue} 70% 45%)`;
+  }
+})();
+</script>

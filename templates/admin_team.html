@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TaskFlow — Team</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
+      --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
+      --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#0b1220; --chip-border:#334155;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); background:linear-gradient(135deg,#0a0f1c,#0b1220 32%,#0a1020); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit; text-decoration:none}
+
+    /* Top bar - exact same as all other pages */
+    .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid #0e1729}
+    .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+    .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
+
+    .tabs-top{display:flex; gap:8px; position:relative}
+    .tab-top{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--elev); color:var(--text); font-weight:700; position:relative}
+    .tab-top.active{outline:2px solid var(--accent2); color:#fff}
+
+    .user{margin-left:auto; display:flex; align-items:center; gap:8px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:var(--text); font-size:12px}
+    .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--elev); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
+
+    /* Admin dropdown */
+    .dropdown{position:relative}
+    .dropdown-btn{cursor:pointer; background:none; border:none; color:inherit; padding:0; font-weight:700}
+    .dropdown-menu{
+      position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+      background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; z-index:100
+    }
+    .dropdown-menu.open{display:block}
+    .dropdown-menu a{display:block; padding:10px 12px; color:var(--text)}
+    .dropdown-menu a:hover{background:var(--accent2); color:#fff}
+
+    /* Subscription pill */
+    .sub-status{display:inline-flex !important; align-items:center; gap:8px; padding:4px 10px; border:1px solid var(--chip-border); background:var(--chip); border-radius:999px; font-size:12px; color:var(--text);}
+    .sub-status .dot{width:8px; height:8px; border-radius:50%; background:var(--good)}
+
+    /* Profile */
+    .avatar{width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none}
+    .profile{position:relative}
+    .profile-btn{display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--line); padding:4px 8px; border-radius:999px; cursor:pointer; color:var(--text)}
+    .profile-menu{position:absolute; right:0; top:calc(100% + 6px); min-width:180px; display:none; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:60}
+    .profile-menu.open{display:flex}
+    .profile-menu a{padding:10px 12px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--line)}
+    .profile-menu a:last-child{border-bottom:none}
+    .profile-menu a:hover{background:var(--elev)}
+
+    /* Page content */
+    .inner{max-width:1200px; margin:0 auto; padding:18px 20px}
+    .heading{display:flex; align-items:center; gap:12px; margin-bottom:10px}
+    .heading h1{margin:0; font-size:22px}
+    .heading .spacer{flex:1}
+
+    .notice{margin:10px 0 16px; padding:12px; border:1px solid var(--line); background:#0b1220aa; backdrop-filter:blur(8px); border-radius:12px}
+    .notice .title{font-weight:800; color:#93c5fd; text-transform:uppercase; font-size:12px; letter-spacing:.4px; margin-bottom:6px}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; padding:2px 6px; border:1px solid var(--line); background:#0f172a; border-radius:6px}
+
+    .grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+    @media (max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:700px){.grid{grid-template-columns:1fr}}
+
+    .card{position:relative; display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:14px; background:#0f172a}
+    .toprow{display:flex; align-items:center; gap:12px}
+    
+    .info{min-width:0}
+    .name{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .email{color:#c86316; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .role{margin-left:auto}
+    /*.role .pill{background:#0b1220}*/
+
+    .actions{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px}
+    .actions .left{}
+    .actions .right{margin-left:auto}
+
+    /* Modal */
+    .modal-backdrop{position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.55); z-index:70}
+    .modal{width:min(560px,calc(100% - 40px)); background:#0f172a; border:1px solid var(--line); border-radius:14px; padding:16px}
+    .modal h3{margin:0 0 12px}
+    .modal .body{display:flex; flex-direction:column; gap:10px}
+    label.desc{font-size:12px; font-weight:800; color:#93c5fd; text-transform:uppercase; letter-spacing:.3px}
+    .input, select{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:#0b1220; color:var(--text)}
+
+    .foot{display:flex; gap:8px; justify-content:flex-end; margin-top:12px}
+
+    /* Light theme */
+    :root[data-theme="light"]{
+      --bg:#f6f7fb; --brand:#ffffff; --surface:#ffffff; --elev:#ffffff; --line:#94a3b8;
+      --text:#0b1324; --muted:#334155; --accent:#7c3aed; --accent2:#2563eb;
+      --chip:#f8fafc; --chip-border:#cbd5e1;
+    }
+    :root[data-theme="light"] body{background:linear-gradient(135deg,#f8fafc,#eef2ff 32%,#ffffff); color:var(--text)}
+    :root[data-theme="light"] .top{background:#ffffffcc; backdrop-filter:blur(6px); border-bottom:1px solid var(--line)}
+    :root[data-theme="light"] .panel, :root[data-theme="light"] .card{background:#fff; border:1px solid var(--line); box-shadow:0 10px 28px rgba(15,23,42,.08)}
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="top" role="banner">
+    <div class="inner">
+      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <nav class="tabs-top" aria-label="Primary">
+        <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
+
+        {% if is_admin %}
+        <div class="tab-top dropdown" id="adminDropdown">
+          <button class="dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
+          <div class="dropdown-menu" id="adminMenu" role="menu">
+            <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
+            <a href="{{ url_for('admin_day_end') }}">Day End</a>
+            <a href="{{ url_for('admin_reports') }}">Reports</a>
+            <!--<a href="{{ url_for('admin_vendor_approvals') }}">Vendor Approvals</a>-->
+            <a class="active" href="{{ url_for('admin_team') }}">Team</a>
+            <a href="{{ url_for('recycle_bin') }}">Recycle Bin</a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="user">
+        {% if is_admin %}
+          <form method="post" action="{{ url_for('switch_shop') }}" style="display:flex; gap:8px; align-items:center" id="shopSwitchForm">
+            <select name="shop_id" class="pill" id="shopSelect" aria-label="Active shop">
+              {% for s in all_shops %}
+                <option value="{{ s.id }}" {% if s.id == active_shop_id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% else %}
+          <span class="pill">{{ shop.name }}</span>
+        {% endif %}
+
+        {% set is_pro = current_user.is_authenticated and (current_user.is_lifetime or (current_user.plan and current_user.plan|lower != 'free')) %}
+        {% set expires = current_user.subscription_expires_at %}
+        {% set warn = (expires and expires <= (datetime.utcnow() + timedelta(days=5))) %}
+        <span class="sub-status {% if warn %}warn{% endif %}">
+          <span class="dot"></span>
+          {% if current_user.is_lifetime %}
+            <strong>Lifetime</strong>
+          {% elif is_pro and expires %}
+            <strong>{{ current_user.plan|capitalize }}</strong> — expires {{ expires.strftime('%b %d') }}
+          {% elif is_pro %}
+            <strong>{{ current_user.plan|capitalize }}</strong>
+          {% else %}
+            <strong>Free</strong> — <a href="{{ url_for('billing') }}" style="color:#93c5fd;text-decoration:none">Upgrade</a>
+          {% endif %}
+        </span>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
+            <div class="avatar" data-name="{{ current_user.username }}"></div>
+          </button>
+          <div class="profile-menu" id="profileMenu" role="menu">
+            <a href="{{ url_for('profile') }}" role="menuitem">Your Profile</a>
+            <a href="{{ url_for('settings') }}" role="menuitem">Settings</a>
+            <a href="{{ url_for('logout') }}" role="menuitem">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <main class="inner">
+    <div class="heading">
+      <h1>Manage Users</h1>
+      <div class="spacer"></div>
+      {% if is_admin %}
+      <button class="btn primary" id="addUserBtn">Add User</button>
+      {% endif %}
+    </div>
+
+    <div class="notice">
+      <div class="title">Default Shop Password</div>
+
+      <form method="post" action="{{ url_for('set_shop_password') }}" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        
+        <input 
+          type="text" 
+          name="shop_password" 
+          class="input" 
+          value="{{ tech_reset_password or '' }}" 
+          placeholder="Set default password"
+          style="max-width:220px;"
+        />
+
+        <button class="btn primary" type="submit">Save</button>
+
+      </form>
+
+      <div style="font-size:12px; color:#a3b2c6; margin-top:6px;">
+        This password will be used for all new users and resets.
+      </div>
+    </div>
+
+    <section class="grid" id="userGrid">
+      {% for u in users %}
+      <article class="card" data-user-id="{{ u.id }}" data-username="{{ u.username }}" data-email="{{ u.email }}" data-role="{{ (u.role or '')|lower }}">
+        <div class="toprow">
+          <div class="avatar" data-name="{{ u.username or u.email }}"></div>
+          <div class="info">
+            <div class="name" title="{{ u.username }}">{{ u.username }}</div>
+            <div class="email" title="{{ u.email }}">{{ u.email }}</div>
+          </div>
+          <div class="role">{% set role_key = (u.role or '')|lower %}<span class="pill">{{ role_labels.get(role_key, (u.role or '')|capitalize) }}</span></div>
+        </div>
+        <div class="actions">
+          <div class="left">
+            {% if is_admin %}
+            <button class="btn ghost" data-reset="{{ u.id }}">Reset password</button>
+            {% endif %}
+          </div>
+          <div class="right">
+            {% if is_admin %}
+            <button class="btn" data-edit="{{ u.id }}">Edit user</button>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="userModalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+      <h3 id="userModalTitle">Add User</h3>
+      <form id="userForm" method="post" action="#">
+        <div class="body">
+          <div>
+            <label class="desc" for="uf_name">Name</label>
+            <input id="uf_name" name="username" class="input" placeholder="First Last" required />
+          </div>
+          <div>
+            <label class="desc" for="uf_email">Email</label>
+            <input id="uf_email" type="email" name="email" class="input" placeholder="name@example.com" required />
+          </div>
+          <div>
+            <label class="desc" for="uf_role">Role</label>
+            <select id="uf_role" name="role">
+              {% set role_options = roles or [('manager','Manager'),('csr','CSR'),('porter','Porter'),('tech','Tech')] %}
+              {% for r in role_options %}
+                {% set value = (r[0] if (r is sequence and r|length>1) else r) %}
+                {% set label = (r[1] if (r is sequence and r|length>1) else r) %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="foot">
+          <button type="button" class="btn" id="userCancel">Cancel</button>
+          <button type="submit" class="btn primary" id="userSave">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+      <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Profile dropdown - works on click anywhere including picture
+      const pBtn = document.getElementById('profileBtn');
+      const pMenu = document.getElementById('profileMenu');
+      if (pBtn && pMenu) {
+        pBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          pMenu.classList.toggle('open');
+          pBtn.setAttribute('aria-expanded', pMenu.classList.contains('open'));
+        });
+        document.addEventListener('click', (e) => {
+          if (!pMenu.contains(e.target) && e.target !== pBtn) {
+            pMenu.classList.remove('open');
+            pBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Avatar coloring
+      function strHash(s) {
+        let h = 0;
+        for (let i = 0; i < s.length; i++) {
+          h = ((h << 5) - h) + s.charCodeAt(i);
+          h |= 0;
+        }
+        return h;
+      }
+      function nameToInitials(s) {
+        if (!s) return '??';
+        const parts = String(s).trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return '??';
+        return (parts[0][0] || '?').toUpperCase() + (parts[1] ? (parts[1][0] || '?').toUpperCase() : '');
+      }
+      document.querySelectorAll('.avatar').forEach(el => {
+        const name = el.getAttribute('data-name') || '';
+        el.textContent = nameToInitials(name);
+        const hue = Math.abs(strHash(name)) % 360;
+        el.style.background = `hsl(${hue} 60% 35%)`;
+      });
+
+      // Card avatars keep nice random colors
+      document.querySelectorAll('.card .avatar').forEach(el => {
+        const name = el.getAttribute('data-name') || '';
+        el.textContent = nameToInitials(name);
+        const hue = Math.abs(strHash(name)) % 360;
+        el.style.background = `hsl(${hue} 60% 35%)`;
+      });
+
+      // Admin dropdown
+      const adminBtn = document.getElementById('adminBtn');
+      const adminMenu = document.getElementById('adminMenu');
+      if (adminBtn && adminMenu) {
+        adminBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = adminMenu.classList.toggle('open');
+          adminBtn.setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', (e) => {
+          if (!adminMenu.contains(e.target) && e.target !== adminBtn) {
+            adminMenu.classList.remove('open');
+            adminBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Shop switch
+      const shopSel = document.getElementById('shopSelect');
+      const shopForm = document.getElementById('shopSwitchForm');
+      if (shopSel && shopForm) shopSel.addEventListener('change', () => shopForm.submit());
+    });
+
+    // Team modal and reset logic (unchanged - keep all of this)
+    const modal = document.getElementById('userModalBackdrop');
+    const form = document.getElementById('userForm');
+    const title = document.getElementById('userModalTitle');
+    const addBtn = document.getElementById('addUserBtn');
+    const cancelBtn = document.getElementById('userCancel');
+    let editingId = null;
+
+    function openModal(mode, payload){
+      modal.style.display='grid';
+      if(mode==='add'){
+        editingId = null;
+        title.textContent = 'Add User';
+        form.action = "{{ url_for('admin_team_add_user') }}";
+        form.reset();
+      } else {
+        editingId = payload.id;
+        title.textContent = 'Edit User';
+        form.action = `/admin/team/${payload.id}/update`;
+        document.getElementById('uf_name').value = payload.username || '';
+        document.getElementById('uf_email').value = payload.email || '';
+        document.getElementById('uf_role').value = payload.role || 'csr';
+      }
+    }
+    function closeModal(){ modal.style.display='none'; }
+    addBtn?.addEventListener('click', () => openModal('add'));
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => { if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if(e.key==='Escape' && modal.style.display==='grid') closeModal(); });
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-edit]');
+      if(!btn) return;
+      const card = btn.closest('.card');
+      const payload = {
+        id: card.getAttribute('data-user-id'),
+        username: card.getAttribute('data-username'),
+        email: card.getAttribute('data-email'),
+        role: card.getAttribute('data-role') || ''
+      };
+      openModal('edit', payload);
+    });
+
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-reset]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-reset');
+      if(!confirm('Reset password for this user?')) return;
+      const res = await fetch(`/admin/team/${id}/reset-password`, { method:'POST' });
+      if(res.ok){
+        const data = await res.json().catch(()=>({}));
+        const pwd = data.new_password || '(generated)';
+        alert(`New password: ${pwd}\nShare this with the user.`);
+      }
+    });
+  </script>
+
+  <script>
+    (function(){
+      const saved = localStorage.getItem('theme');
+      if(saved==='light' || saved==='dark'){
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    })();
+  </script>
+</body>
+</html>
