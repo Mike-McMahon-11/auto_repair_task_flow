@@ -471,12 +471,10 @@ def _incoming_filter_for_user(q, user: User):
 
     # 🟢 NORMAL USERS
     return base.filter(
-        and_(
-            Task.assigned_to.is_(None),  # ❗ EXCLUDE personal assignments
-            or_(
-                Task.assigned_group == _role_to_group(user.role),
-                Task.assigned_group.is_(None)  # optional: truly unassigned
-            )
+        or_(
+            Task.assigned_to == user.username,  # ✅ SHOW personal tasks
+            Task.assigned_group == _role_to_group(user.role),
+            Task.assigned_to.is_(None)
         )
     )
     
