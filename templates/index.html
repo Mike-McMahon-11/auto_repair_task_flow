@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>TaskFlow Dashboard</title>
+  <title>WreckFlow Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -270,7 +270,7 @@
   <!-- Clean Top Bar - Same as working Archive -->
   <div class="top" role="banner">
     <div class="inner">
-      <div class="logo" aria-label="TaskFlow">TaskFlow</div>
+      <div class="logo" aria-label="WreckFlow">WreckFlow</div>
       <nav class="tabs-top" aria-label="Primary">
         <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
         <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
@@ -354,7 +354,7 @@
         <div class="label">Monthly Goal</div>
         <div class="value">${{ shop.monthly_goal }}</div>
       </div>
-      
+
       <div class="panel kpi clickable" id="kpiRemaining" title="Click to set Monthly Goal">
         <div class="label">Remaining to Goal</div>
         <div class="value">${{ kpi.remaining }}</div>
