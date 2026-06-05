@@ -66,14 +66,27 @@
         max-width:100%;
       }
 
+      /* 👇 NEW: tabs go FULL WIDTH under logo */
       .tabs-top {
-        display:none;
+        display:flex;
+        width:100%;
+        order:2;
+        gap:6px;
+        margin-top:6px;
       }
 
+      .tab-top {
+        flex:1;
+        justify-content:center;
+        font-size:13px;
+        padding:6px 8px;
+      }
+
+      /* 👇 user row goes under tabs */
       .user {
         width:100%;
-        justify-content: space-between; /* 👈 KEY FIX */
-        flex-wrap:nowrap;
+        order:3;
+        justify-content: space-between;
       }
 
       .pill {
@@ -84,7 +97,6 @@
       .sub-status {
         display:none;
       }
-
     }
 
     .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
