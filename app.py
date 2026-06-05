@@ -458,24 +458,44 @@ def _month_range(dt: datetime):
         end = start.replace(month=start.month+1)
     return start, end
 
+# def _incoming_filter_for_user(q, user: User):
+#     base = q.outerjoin(TaskRoleStatus).filter(
+#         Task.status != 'done'
+#     )
+
+#     # 🔴 ADMIN → ONLY unassigned + group tasks (NOT personal assignments)
+#     if user.role == 'admin':
+#         return base.filter(
+#             Task.assigned_to.is_(None)
+#         )
+
+#     # 🟢 NORMAL USERS
+#     return base.filter(
+#         or_(
+#             Task.assigned_to == user.username,  # ✅ SHOW personal tasks
+#             Task.assigned_group == _role_to_group(user.role),
+#             Task.assigned_to.is_(None)
+#         )
+#     )
+
 def _incoming_filter_for_user(q, user: User):
     base = q.outerjoin(TaskRoleStatus).filter(
         Task.status != 'done'
     )
 
-    # 🔴 ADMIN → ONLY unassigned + group tasks (NOT personal assignments)
+    # 🔴 ADMIN → ONLY unassigned (your rule is fine)
     if user.role == 'admin':
         return base.filter(
             Task.assigned_to.is_(None)
         )
 
-    # 🟢 NORMAL USERS
+    # 🟢 NORMAL USERS → ONLY their assignments
     return base.filter(
         or_(
-            Task.assigned_to == user.username,  # ✅ SHOW personal tasks
-            Task.assigned_group == _role_to_group(user.role),
-            Task.assigned_to.is_(None)
-        )
+            Task.assigned_to == user.username,
+            Task.assigned_group == _role_to_group(user.role)
+        ),
+        TaskRoleStatus.role == user.role   # 🔥 THIS MAKES IT PERFECT
     )
     
 def _outgoing_filter_for_user(q, user: User):
