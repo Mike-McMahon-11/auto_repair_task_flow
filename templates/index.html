@@ -57,6 +57,30 @@
     /* Top bar - Clean & consistent */
     .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid var(--line);}
     .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
+
+    @media (max-width: 700px){
+      .top .inner {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+      }
+
+      .user {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .pill, .sub-status {
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+
+      .sub-status {
+        display: none;
+      }
+    }
+
     .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
 
     .tabs-top{display:flex; gap:8px; position:relative}
