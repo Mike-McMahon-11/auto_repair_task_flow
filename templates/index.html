@@ -58,27 +58,33 @@
     .top{position:sticky; top:0; z-index:40; background:var(--brand); border-bottom:1px solid var(--line);}
     .top .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:14px}
 
-    @media (max-width: 700px){
+    @media (max-width:700px){
+
       .top .inner {
         flex-wrap: wrap;
         padding: 10px 12px;
+        max-width:100%;
+      }
+
+      .tabs-top {
+        display:none;
       }
 
       .user {
-        width: 100%;
-        justify-content: flex-end;
-        gap: 6px;
-        flex-wrap: wrap;
+        width:100%;
+        justify-content: space-between; /* 👈 KEY FIX */
+        flex-wrap:nowrap;
       }
 
-      .pill, .sub-status {
-        font-size: 11px;
-        padding: 3px 8px;
+      .pill {
+        font-size:11px;
+        padding:4px 8px;
       }
 
       .sub-status {
-        display: none;
+        display:none;
       }
+
     }
 
     .logo{font-weight:800; letter-spacing:.2px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--elev)}
@@ -284,7 +290,7 @@
     }
 
     
-    @media (max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)} .user{display:none}}
+    @media (max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}}
     @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)} .tabs-top{display:none} .left-cluster{min-width:160px}}
   </style>
 </head>
