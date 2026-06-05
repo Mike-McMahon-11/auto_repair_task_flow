@@ -483,19 +483,13 @@ def _incoming_filter_for_user(q, user: User):
         Task.status != 'done'
     )
 
-    # 🔴 ADMIN → ONLY unassigned (your rule is fine)
+    # ADMIN sees everything (you can tweak later)
     if user.role == 'admin':
-        return base.filter(
-            Task.assigned_to.is_(None)
-        )
+        return base
 
-    # 🟢 NORMAL USERS → ONLY their assignments
+    # 🔥 KEY FIX: show tasks where this role exists
     return base.filter(
-        or_(
-            Task.assigned_to == user.username,
-            Task.assigned_group == _role_to_group(user.role)
-        ),
-        TaskRoleStatus.role == user.role   # 🔥 THIS MAKES IT PERFECT
+        TaskRoleStatus.role == user.role
     )
     
 def _outgoing_filter_for_user(q, user: User):
