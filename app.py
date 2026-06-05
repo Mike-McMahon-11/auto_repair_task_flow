@@ -478,20 +478,34 @@ def _month_range(dt: datetime):
 #         )
 #     )
 
+# # Works
+# def _incoming_filter_for_user(q, user: User):
+#     base = q.outerjoin(TaskRoleStatus).filter(
+#         Task.status != 'done'
+#     )
+
+#     # ADMIN sees everything (you can tweak later)
+#     if user.role == 'admin':
+#         return base
+
+#     # 🔥 KEY FIX: show tasks where this role exists
+#     return base.filter(
+#         TaskRoleStatus.role == user.role
+#     )
+    
 def _incoming_filter_for_user(q, user: User):
     base = q.outerjoin(TaskRoleStatus).filter(
-        Task.status != 'done'
+        Task.status != 'done',
+        Task.kind == 'tech'   # 🔥 ONLY TECH TASKS
     )
 
-    # ADMIN sees everything (you can tweak later)
     if user.role == 'admin':
         return base
 
-    # 🔥 KEY FIX: show tasks where this role exists
     return base.filter(
         TaskRoleStatus.role == user.role
     )
-    
+
 def _outgoing_filter_for_user(q, user: User):
     return q.filter(
         Task.submitted_by_user_id == user.id,
@@ -894,9 +908,13 @@ def index():
     tab = request.args.get('tab', 'incoming')   # default incoming for non-admins
 
     # DO NOT filter out "done" here anymore
+    # base = Task.query.filter_by(
+    #     shop_id=shop.id,
+    #     kind='tech',
+    #     deleted_at=None
+    # )
     base = Task.query.filter_by(
         shop_id=shop.id,
-        kind='tech',
         deleted_at=None
     )
 
@@ -1105,7 +1123,7 @@ def create_task():
         assigned_to=assigned_to,
         assigned_group=assigned_group,
         submitted_by_user_id=current_user.id,
-        kind='tech',
+        kind='request',
         request_type=request_type,
     )
     db.session.add(t)
