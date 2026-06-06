@@ -46,6 +46,9 @@ app.config['ARCHIVE_RETENTION_DAYS'] = 30
 
 db = SQLAlchemy(app)
 
+with app.app_context():
+    db.create_all()
+
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -2319,6 +2322,7 @@ def update_shop_goal():
 # ------------------------------------------------------------------------------
 with app.app_context():
     db.create_all()
+
     _ensure_columns()
     # Ensure DailyReply.author_name exists (idempotent)
     if db.engine.url.get_backend_name() == 'sqlite':
