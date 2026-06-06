@@ -129,7 +129,7 @@
     .tab-top.active{outline:2px solid var(--accent2); color:var(--text);}
 
     .user{margin-left:auto; display:flex; align-items:center; gap:8px}
-    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:var(--elev); color:var(--text); border:1px solid var(--line); font-size:12px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); background:var(--elev); border-radius:999px; color:var(--text); font-size:12px}
     .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
     .btn.black{
       background:var(--text);
@@ -233,7 +233,7 @@
     .right-cluster{
       display:flex;
       align-items:center;
-      gap:10px; /* bump from 8 → 10 */
+      gap:10px;
       flex-wrap:wrap;
     }
     
@@ -347,12 +347,6 @@
     .photo-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px}
     .photo-card{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface); aspect-ratio:1/1; display:flex; align-items:center; justify-content:center}
     .photo-card img{max-width:100%; max-height:100%; display:block}
-
-    select.pill {
-      background:var(--surface);
-      color:var(--text);
-    }
-
     
     @media (max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}}
     @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)} .left-cluster{min-width:160px}}
