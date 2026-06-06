@@ -95,7 +95,7 @@
       }
 
       .sub-status {
-        font-size:8px;
+        font-size:7px;
         padding:2px 8px;
         gap:4px;
       }
@@ -130,7 +130,7 @@
     .tab-top.active{outline:2px solid var(--accent2); color:var(--text);}
 
     .user{margin-left:auto; display:flex; align-items:center; gap:8px}
-    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--text); border:1px solid var(--line); font-size:12px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:var(--elev); color:var(--text); border:1px solid var(--line); font-size:12px}
     .btn{appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:700}
     .btn.black{
       background:var(--text);
@@ -372,7 +372,7 @@
 
         {% if is_admin %}
         <div class="tab-top dropdown" id="adminDropdown">
-          <button class="dropdown-btn" id="adminBtn">Admin ▾</button>
+          <button class="btn dropdown-btn" id="adminBtn">Admin ▾</button>
           <div class="dropdown-menu" id="adminMenu">
             <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
             <a href="{{ url_for('admin_day_end') }}">Day End</a>
