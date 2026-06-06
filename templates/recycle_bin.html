@@ -111,6 +111,58 @@
     .profile-menu a:last-child{border-bottom:none}
     .profile-menu a:hover{background:var(--elev)}
 
+    @media (max-width:700px){
+
+      .top .inner {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        max-width:100%;
+      }
+
+      /* 👇 NEW: tabs go FULL WIDTH under logo */
+      .tabs-top {
+        display:flex;
+        width:100%;
+        order:3;
+        gap:6px;
+        margin-top:6px;
+      }
+
+      .tab-top {
+        flex:1;
+        justify-content:center;
+        font-size:13px;
+        padding:6px 8px;
+      }
+
+      /* 👇 user row goes under tabs */
+      .user {
+        width:100%;
+        order:2;
+        justify-content: space-between;
+      }
+
+      .pill {
+        font-size:11px;
+        padding:4px 8px;
+      }
+
+      .sub-status {
+        font-size:10px;
+        padding:3px 6px;
+        gap:4px;
+      }
+
+      .sub-status strong {
+        font-size:6px;
+      }
+
+      .sub-status .dot {
+        width:6px;
+        height:6px;
+      }
+    }
+    
     /* Original page styles (unchanged) */
     .ann{background:linear-gradient(90deg,#5b21b6,#7c3aed); color:#fff}
     .ann .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; justify-content:space-between}
