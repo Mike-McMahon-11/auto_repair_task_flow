@@ -148,13 +148,13 @@
       }
 
       .sub-status {
-        font-size:10px;
+        font-size:6px;
         padding:3px 6px;
         gap:4px;
       }
 
       .sub-status strong {
-        font-size:6px;
+        font-size:10px;
       }
 
       .sub-status .dot {
@@ -162,7 +162,7 @@
         height:6px;
       }
     }
-    
+
     /* Original page styles (unchanged) */
     .ann{background:linear-gradient(90deg,#5b21b6,#7c3aed); color:#fff}
     .ann .inner{max-width:1200px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; justify-content:space-between}
@@ -207,8 +207,8 @@
     .photo-card{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface); display:flex; align-items:center; justify-content:center; aspect-ratio:1/1}
     .photo-card img{max-width:100%; max-height:100%; display:block}
 
-    @media (max-width:1200px){.user{display:none}}
-    @media (max-width:700px){.tabs-top{display:none}}
+    @media (max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)} .left-cluster{min-width:160px}}
   </style>
 </head>
 <body>

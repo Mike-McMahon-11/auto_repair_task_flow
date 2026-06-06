@@ -97,7 +97,7 @@
       border-radius:14px;
       padding:14px;
     }
-    
+
     @media (max-width:700px){
 
       .top .inner {
@@ -135,13 +135,13 @@
       }
 
       .sub-status {
-        font-size:10px;
+        font-size:6px;
         padding:3px 6px;
         gap:4px;
       }
 
       .sub-status strong {
-        font-size:6px;
+        font-size:10px;
       }
 
       .sub-status .dot {
@@ -209,7 +209,9 @@
     }
     .photo-item:hover{box-shadow:0 0 0 3px var(--accent2);}
 
-    @media (max-width:700px){.tabs-top{display:none}}
+    @media (max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)} .left-cluster{min-width:160px}}
+
   </style>
 </head>
 <body>
