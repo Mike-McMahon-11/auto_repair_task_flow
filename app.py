@@ -375,11 +375,13 @@ def is_active_subscriber(user: User) -> bool:
 
 def _table_exists(name: str) -> bool:
     with db.engine.connect() as con:
-        row = con.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table' AND name=:n"),
-            {'n': name}
-        ).first()
-        return bool(row)
+        result = con.execute(text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = :name
+            )
+        """), {"name": name})
+        return result.scalar()
 
 def _ensure_columns():
     """Lightweight idempotent migrations for SQLite tables used by the app."""
@@ -387,12 +389,6 @@ def _ensure_columns():
     with app.app_context():
         # use a single connection so we don't hit ResourceClosedError
         with db.engine.begin() as con:
-            # def table_exists(name: str) -> bool:
-            #     res = con.exec_driver_sql(
-            #         "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
-            #         (name,)
-            #     )
-            #     return res.fetchone() is not None
 
             def table_exists(name):
                 from sqlalchemy import text
@@ -2334,7 +2330,9 @@ def update_shop_goal():
 with app.app_context():
     db.create_all()
 
-    _ensure_columns()
+    if db.engine.url.get_backend_name() == 'sqlite':
+        _ensure_columns()
+
     # Ensure DailyReply.author_name exists (idempotent)
     if db.engine.url.get_backend_name() == 'sqlite':
         if not _table_has_column('daily_reply', 'author_name'):
