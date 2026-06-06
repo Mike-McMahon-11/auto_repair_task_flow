@@ -70,7 +70,7 @@
       .tabs-top {
         display:flex;
         width:100%;
-        order:2;
+        order:3;
         gap:6px;
         margin-top:6px;
       }
@@ -85,7 +85,7 @@
       /* 👇 user row goes under tabs */
       .user {
         width:100%;
-        order:3;
+        order:2;
         justify-content: space-between;
       }
 
@@ -95,7 +95,18 @@
       }
 
       .sub-status {
-        display:none;
+        font-size:10px;
+        padding:3px 6px;
+        gap:4px;
+      }
+
+      .sub-status strong {
+        font-size:10px;
+      }
+
+      .sub-status .dot {
+        width:6px;
+        height:6px;
       }
     }
 
@@ -281,6 +292,47 @@
     .desc-label{font-size:12px; font-weight:700; letter-spacing:.3px; color:#93c5fd; margin:0 0 6px; text-transform:uppercase;}
     .desc-box{background:var(--surface); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:10px; white-space:pre-wrap;}
     #rdForm .input{flex:1}
+
+    @media (max-width:700px){
+
+      .row-head {
+        flex-direction:column;
+        gap:8px;
+      }
+
+      .right-cluster {
+        width:100%;
+        justify-content:space-between;
+      }
+
+      .mid {
+        width:100%;
+      }
+
+      .right-cluster {
+      flex-wrap:wrap;
+      gap:6px;
+      }
+
+      .right-cluster form {
+        flex:1;
+      }
+
+      .right-cluster select {
+        width:100%;
+      }
+
+      .sla {
+        font-size:11px;
+        padding:3px 8px;
+      }
+
+      .sla {
+        order:3;
+        width:100%;
+        text-align:left;
+      }
+    }
 
     /* Avatar & profile */
     .avatar{width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:var(--accent2); color:white; letter-spacing:.5px; user-select:none}
