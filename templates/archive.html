@@ -100,6 +100,47 @@
     .sub-status .dot{width:8px; height:8px; border-radius:50%; background:var(--good)}
     .sub-status.warn .dot{background:var(--warn)}
 
+    @media (max-width:700px){
+
+      .row-head {
+        flex-direction:column;
+        gap:8px;
+      }
+
+      .right-cluster {
+        width:100%;
+        justify-content:space-between;
+      }
+
+      .mid {
+        width:100%;
+      }
+
+      .right-cluster {
+      flex-wrap:wrap;
+      gap:6px;
+      }
+
+      .right-cluster form {
+        flex:1;
+      }
+
+      .right-cluster select {
+        width:100%;
+      }
+
+      .sla {
+        font-size:11px;
+        padding:3px 8px;
+      }
+
+      .sla {
+        order:3;
+        width:100%;
+        text-align:left;
+      }
+    }
+    
     /* Profile avatar & menu - exact from your working index */
     .avatar{ width:32px; height:32px; border-radius:999px; display:grid; place-items:center; font-weight:900; background:#1f2937; color:#fff; letter-spacing:.5px; user-select:none }
     .profile{ position:relative }
