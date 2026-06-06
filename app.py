@@ -37,7 +37,10 @@ os.makedirs(app.instance_path, exist_ok=True)
 
 # IMPORTANT: set a strong secret in production
 app.secret_key = os.environ.get("SECRET_KEY", "dev-key")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'shop.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    "DATABASE_URL",
+    'sqlite:///' + os.path.join(app.instance_path, 'shop.db')
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['ARCHIVE_RETENTION_DAYS'] = 30
 
