@@ -387,12 +387,23 @@ def _ensure_columns():
     with app.app_context():
         # use a single connection so we don't hit ResourceClosedError
         with db.engine.begin() as con:
-            def table_exists(name: str) -> bool:
-                res = con.exec_driver_sql(
-                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
-                    (name,)
-                )
-                return res.fetchone() is not None
+            # def table_exists(name: str) -> bool:
+            #     res = con.exec_driver_sql(
+            #         "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            #         (name,)
+            #     )
+            #     return res.fetchone() is not None
+
+            def table_exists(name):
+                from sqlalchemy import text
+                with db.engine.connect() as con:
+                    result = con.execute(text("""
+                        SELECT EXISTS (
+                            SELECT FROM information_schema.tables 
+                            WHERE table_name = :name
+                        )
+                    """), {"name": name})
+                    return result.scalar()
 
             def cols(table: str):
                 res = con.exec_driver_sql(f"PRAGMA table_info('{table}')")
