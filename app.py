@@ -816,6 +816,11 @@ def register_shop():
             return render_template('register_shop.html')
         s = Shop(name=name, monthly_goal=goal)
         db.session.add(s); db.session.commit()
+        db.session.add(AdminShop(
+            admin_user_id=current_user.id,
+            shop_id=s.id
+        ))
+        db.session.commit()
         flash('Shop registered. Create a user next.')
         return redirect(url_for('create_user', shop_id=s.id))
     return render_template('register_shop.html')
@@ -1020,6 +1025,10 @@ def index():
         allowed_shop_ids = [
             s.shop_id for s in AdminShop.query.filter_by(admin_user_id=current_user.id)
         ]
+
+        # 🔥 SAFETY: if no mapping exists, fallback to their own shop
+        if not allowed_shop_ids:
+            allowed_shop_ids = [current_user.shop_id]
         all_shops = Shop.query.filter(Shop.id.in_(allowed_shop_ids)).order_by(Shop.name.asc()).all()
     else:
         all_shops = []
