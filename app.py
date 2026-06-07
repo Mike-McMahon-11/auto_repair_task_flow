@@ -633,12 +633,25 @@ def get_active_shop(user: User) -> Shop:
 def _topbar_context():
     """Context used by the top header across all pages so the header stays consistent."""
     shop = get_active_shop(current_user)
+
+    if current_user.role == 'admin':
+        allowed_shop_ids = [
+            s.shop_id for s in AdminShop.query.filter_by(admin_user_id=current_user.id)
+        ]
+
+        if not allowed_shop_ids:
+            allowed_shop_ids = [current_user.shop_id]
+
+        all_shops = Shop.query.filter(Shop.id.in_(allowed_shop_ids)).order_by(Shop.name.asc()).all()
+    else:
+        all_shops = []
+        
     return dict(
-        is_admin=(current_user.role == 'admin'),
-        shop=shop,
-        all_shops=Shop.query.order_by(Shop.name.asc()).all() if current_user.role == 'admin' else [],
-        active_shop_id=shop.id if shop else None,
-    )
+    is_admin=(current_user.role == 'admin'),
+    shop=shop,
+    all_shops=all_shops,
+    active_shop_id=shop.id if shop else None,
+)
 
 def _purge_completed_older_than(days: int):
     """Safe purge for collision repair workflow - deletes children first."""
@@ -768,8 +781,11 @@ def login():
             login_user(u)
             if u.role == 'admin':
                 first_shop = AdminShop.query.filter_by(admin_user_id=u.id).first()
+
                 if first_shop:
                     session['active_shop_id'] = first_shop.shop_id
+                else:
+                    session['active_shop_id'] = u.shop_id  # fallback
             # Role-based landing
             if is_tech(current_user):
                 return redirect(url_for('tech_dashboard'))
@@ -805,51 +821,112 @@ ROLES = [
     ('porter', 'Porter'),
 ]
 
+# @app.route('/register_shop', methods=['GET','POST'])
+# @login_required
+# def register_shop():
+#     if request.method == 'POST':
+#         name = request.form['name'].strip()
+#         goal = request.form.get('goal', type=int) or 100
+#         if not name:
+#             flash('Shop name required.')
+#             return render_template('register_shop.html')
+#         s = Shop(name=name, monthly_goal=goal)
+#         db.session.add(s); db.session.commit()
+#         db.session.add(AdminShop(
+#             admin_user_id=current_user.id,
+#             shop_id=s.id
+#         ))
+#         db.session.commit()
+#         flash('Shop registered. Create a user next.')
+#         return redirect(url_for('create_user', shop_id=s.id))
+#     return render_template('register_shop.html')
+
 @app.route('/register_shop', methods=['GET','POST'])
 @login_required
 def register_shop():
+    if current_user.role != 'admin':
+        abort(403)
+
     if request.method == 'POST':
         name = request.form['name'].strip()
         goal = request.form.get('goal', type=int) or 100
+
         if not name:
             flash('Shop name required.')
             return render_template('register_shop.html')
+
+        # 🔥 Create shop
         s = Shop(name=name, monthly_goal=goal)
-        db.session.add(s); db.session.commit()
+        db.session.add(s)
+        db.session.commit()
+
+        # 🔥 Link admin to this shop
         db.session.add(AdminShop(
             admin_user_id=current_user.id,
             shop_id=s.id
         ))
         db.session.commit()
-        flash('Shop registered. Create a user next.')
-        return redirect(url_for('create_user', shop_id=s.id))
+
+        # 🔥 Switch to it immediately
+        session['active_shop_id'] = s.id
+
+        flash('New shop created successfully')
+        return redirect(url_for('index'))
+
     return render_template('register_shop.html')
 
 @app.route('/create_user', methods=['GET','POST'])
+@login_required
 def create_user():
+
+    # 🔥 ALWAYS define shops first (for both GET + POST)
+    if current_user.role == 'admin':
+        allowed_shop_ids = [
+            s.shop_id for s in AdminShop.query.filter_by(admin_user_id=current_user.id)
+        ]
+
+        if not allowed_shop_ids:
+            allowed_shop_ids = [current_user.shop_id]
+
+        shops = Shop.query.filter(Shop.id.in_(allowed_shop_ids)).all()
+    else:
+        shops = []
+
     if request.method == 'POST':
         username = request.form['username'].strip()
         password = (request.form.get('password') or '').strip()
+        role = request.form.get('role','estimator')
+        shop_id = request.form.get('shop_id', type=int)
 
-        # 🔥 If admin didn't enter one → generate
+        # 🔥 generate password if missing
         if not password:
             import secrets
             password = secrets.token_urlsafe(8)
-        role = request.form.get('role','estimator')
-        shop_id = request.form.get('shop_id', type=int)
+
+        # 🔒 VALIDATE shop_id belongs to admin
+        if shop_id not in [s.id for s in shops]:
+            abort(403)
+
         if not all([username, shop_id]):
             flash('All fields required.')
-            return render_template('create_user.html', shops=Shop.query.all(), roles=ROLES)
+            return render_template('create_user.html', shops=shops, roles=ROLES)
+
         if User.query.filter_by(username=username).first():
             flash('Username already exists.')
-            return render_template('create_user.html', shops=Shop.query.all(), roles=ROLES)
+            return render_template('create_user.html', shops=shops, roles=ROLES)
+
         u = User(username=username, role=role, shop_id=shop_id)
         u.set_password(password)
-        db.session.add(u); db.session.commit()
+
+        db.session.add(u)
+        db.session.commit()
+
         flash(f'User created. Temporary password: {password}')
         return redirect(url_for('login'))
-    return render_template('create_user.html', shops=Shop.query.all(), roles=ROLES)
 
+    return render_template('create_user.html', shops=shops, roles=ROLES)
+
+    
 # ---- Reset Password ----
 @app.route('/reset-password', methods=['GET', 'POST'], endpoint='reset_password')
 def reset_password():

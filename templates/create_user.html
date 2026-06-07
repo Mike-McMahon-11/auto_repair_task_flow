@@ -290,10 +290,11 @@
             </select>
           </div>
           <div>
-            <label for="shop_id">Shop</label>
             <select id="shop_id" name="shop_id" required>
               {% for s in shops %}
-                <option value="{{ s.id }}">{{ s.name }}</option>
+                <option value="{{ s.id }}" {% if shops|length == 1 %}selected{% endif %}>
+                  {{ s.name }}
+                </option>
               {% endfor %}
             </select>
           </div>
