@@ -767,7 +767,9 @@ def login():
         if u and u.check_password(pw):
             login_user(u)
             if u.role == 'admin':
-                session.setdefault('active_shop_id', u.shop_id)
+                first_shop = AdminShop.query.filter_by(admin_user_id=u.id).first()
+                if first_shop:
+                    session['active_shop_id'] = first_shop.shop_id
             # Role-based landing
             if is_tech(current_user):
                 return redirect(url_for('tech_dashboard'))
@@ -804,6 +806,7 @@ ROLES = [
 ]
 
 @app.route('/register_shop', methods=['GET','POST'])
+@login_required
 def register_shop():
     if request.method == 'POST':
         name = request.form['name'].strip()
@@ -864,13 +867,19 @@ def _require_admin():
 def switch_shop():
     if current_user.role != 'admin':
         abort(403)
+
     sid = request.form.get('shop_id', type=int)
-    if not sid or not db.session.get(Shop, sid):
-        flash('Invalid shop.')
-        return redirect(request.referrer or url_for('index'))
+
+    allowed = AdminShop.query.filter_by(
+        admin_user_id=current_user.id,
+        shop_id=sid
+    ).first()
+
+    if not allowed:
+        abort(403)  # 🚨 BLOCK unauthorized access
+
     session['active_shop_id'] = sid
     return redirect(request.referrer or url_for('index'))
-
 # ------------------------------------------------------------------------------
 # Requests (Tasks)
 # ------------------------------------------------------------------------------
@@ -1007,8 +1016,13 @@ def index():
     }
 
     shop_users = User.query.filter_by(shop_id=shop.id).order_by(User.username.asc()).all()
-    all_shops = Shop.query.order_by(Shop.name.asc()).all() if is_admin(current_user) else []
-
+    if current_user.role == 'admin':
+        allowed_shop_ids = [
+            s.shop_id for s in AdminShop.query.filter_by(admin_user_id=current_user.id)
+        ]
+        all_shops = Shop.query.filter(Shop.id.in_(allowed_shop_ids)).order_by(Shop.name.asc()).all()
+    else:
+        all_shops = []
     self_tasks = base.filter(
     Task.assigned_to == current_user.username,
     Task.status != 'done'
@@ -2146,7 +2160,21 @@ def archive():
 
     tasks = base.all()
 
-    all_shops = Shop.query.order_by(Shop.name.asc()).all() if current_user.role == 'admin' else []
+    all_shops = []
+    if current_user.role == 'admin':
+        allowed_ids = [
+            s.shop_id for s in AdminShop.query.filter_by(admin_user_id=current_user.id)
+        ]
+        all_shops = Shop.query.filter(Shop.id.in_(allowed_ids)).order_by(Shop.name.asc()).all()
+        
+    # shop_users = User.query.filter_by(shop_id=shop.id).order_by(User.username.asc()).all()
+    # if current_user.role == 'admin':
+    #     allowed_shop_ids = [
+    #         s.shop_id for s in AdminShop.query.filter_by(admin_user_id=current_user.id)
+    #     ]
+    #     all_shops = Shop.query.filter(Shop.id.in_(allowed_shop_ids)).order_by(Shop.name.asc()).all()
+    # else:
+    #     all_shops = []
 
     counts = type("Counts", (), {})()
     counts.requests = requests_count
