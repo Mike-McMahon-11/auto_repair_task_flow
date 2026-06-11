@@ -2686,9 +2686,7 @@ def tech_submit_request():
 
 @app.route('/dev/cleanup-test-shops')
 def cleanup_test_shops():
-    from models import Shop, AdminShop, User
-    from app import db
-
+    
     bad_names = ["TEST_SHOP_2", "TEST_SHOP_3"]
 
     # 1. Find shops to delete
@@ -2723,7 +2721,7 @@ def cleanup_test_shops():
         "status": "success"
     }
 
-    
+
 # ---------------- Reports ----------------
 @app.get('/reports')
 @login_required
