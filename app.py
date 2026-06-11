@@ -1487,186 +1487,172 @@ def admin_daily_updates():
         add_users=add_users,
         **_topbar_context()
     )
-# ---------------- Day End (Admin) COMING SOON----------------
+
+
 @app.route('/admin/day-end', methods=['GET', 'POST'], endpoint='admin_day_end')
 @login_required
 @subscription_required
 @admin_only
 def admin_day_end():
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        abort(403)
+
+    shop = get_active_shop(current_user)
+    if not shop:
+        flash("No active shop selected.", "error")
+        return redirect(url_for('index'))
+
+    # Ensure last month's snapshot exists (if new month)
+    _ensure_prev_month_snapshot(shop, date.today())
+
+    # Resolve date for the editor
+    date_str = request.values.get('date')
+    try:
+        rep_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else date.today()
+    except Exception:
+        rep_date = date.today()
+
+    report = DayEndReport.query.filter_by(shop_id=shop.id, report_date=rep_date).first()
+
+    if request.method == 'POST':
+        action = request.form.get('action', 'save')
+        if not report:
+            report = DayEndReport(shop_id=shop.id, author_id=current_user.id, report_date=rep_date)
+            db.session.add(report)
+
+        def as_int(name):
+            v = (request.form.get(name) or '').replace(',', '').replace('$', '').strip()
+            try:
+                return int(float(v)) if v else 0
+            except Exception:
+                return 0
+
+        report.status               = 'final' if action == 'finalize' else 'draft'
+        report.actual_closed        = as_int('actual_closed')
+        report.tomorrow_close_goal  = as_int('tomorrow_close_goal')
+        report.daily_gp             = max(0, min(100, as_int('daily_gp')))
+
+        report.issues         = request.form.get('issues') or ''
+        report.carryover      = request.form.get('carryover') or ''
+        report.tomorrow_focus = request.form.get('tomorrow_focus') or ''
+        report.notes          = request.form.get('notes') or ''
+
+        db.session.commit()
+        flash('Day End saved.' if action != 'finalize' else 'Day End saved & finalized.', 'success')
+        return redirect(url_for('admin_day_end', date=rep_date.isoformat()))
+
+    # ======= Right-hand metrics / gauge =======
+    mo_goal = (shop.monthly_goal or 0)
+
+    from calendar import monthrange
+    y, m = rep_date.year, rep_date.month
+    days_in_month = monthrange(y, m)[1]
+
+    def is_workday(d: date) -> bool:
+        return d.weekday() < 5  # Mon..Fri
+
+    month_days = [date(y, m, d) for d in range(1, days_in_month + 1)]
+    workdays    = sum(1 for d in month_days if is_workday(d))
+    elapsed_wd  = sum(1 for d in month_days if d <= rep_date and is_workday(d))
+    days_left   = max(0, workdays - elapsed_wd)
+
+    daily_goal  = int(round(mo_goal / workdays)) if workdays else 0
+    target_to_date = daily_goal * elapsed_wd
+
+    m_start = date(y, m, 1)
+    m_end   = date(y, m, days_in_month)
+
+    # --- Build monthly series for chart (cumulative actual vs workday-based goal) ---
+    # Gather each day's actual_closed for the month
+    reports = (DayEndReport.query
+            .filter(DayEndReport.shop_id == shop.id,
+                    DayEndReport.report_date >= m_start,
+                    DayEndReport.report_date <= m_end)
+            .all())
+    by_date = {r.report_date: (r.actual_closed or 0) for r in reports}
+
+    labels = []
+    daily_actuals = []
+    from calendar import monthrange
+    days_in_month = monthrange(y, m)[1]
+    for d in range(1, days_in_month + 1):
+        dt = date(y, m, d)
+        labels.append(str(d))
+        daily_actuals.append(by_date.get(dt, 0))
+
+    # Cumulative actuals
+    cum_actuals = []
+    running = 0
+    for v in daily_actuals:
+        running += int(v or 0)
+        cum_actuals.append(running)
+
+    # Linear goal based on WORKDAYS only (flat on weekends)
+    def is_workday(d: date) -> bool:
+        return d.weekday() < 5  # Mon..Fri
+
+    goal_cum = []
+    if workdays > 0:
+        wd_so_far = 0
+        for d in range(1, days_in_month + 1):
+            if is_workday(date(y, m, d)):
+                wd_so_far += 1
+            goal_cum.append(int(round((mo_goal or 0) * (wd_so_far / workdays))))
+    else:
+        goal_cum = [0] * days_in_month
+
+
+    mtd_actual = (db.session.query(func.coalesce(func.sum(DayEndReport.actual_closed), 0))
+                  .filter(DayEndReport.shop_id == shop.id,
+                          DayEndReport.report_date >= m_start,
+                          DayEndReport.report_date <= m_end)
+                  .scalar()) or 0
+
+    remaining_to_close = max(0, mo_goal - mtd_actual)
+    monthly_variance   = mtd_actual - target_to_date
+    todays_goal        = daily_goal
+    todays_variance    = (report.actual_closed if report else 0) - todays_goal
+
+    days_behind = 0
+    if daily_goal > 0 and mtd_actual < target_to_date:
+        deficit = target_to_date - mtd_actual
+        days_behind = (deficit + daily_goal - 1) // daily_goal  # ceil
+
+    missed_days = (db.session.query(func.count(DayEndReport.id))
+                   .filter(DayEndReport.shop_id == shop.id,
+                           DayEndReport.report_date >= m_start,
+                           DayEndReport.report_date <= rep_date,
+                           DayEndReport.actual_closed < daily_goal)
+                   .scalar()) or 0
+
+    pct = 0 if mo_goal <= 0 else max(0, min(100, int(round(mtd_actual * 100 / mo_goal))))
+
+    all_shops = Shop.query.order_by(Shop.name).all()
+    active_shop_id = shop.id
+
     return render_template(
         'admin_day_end.html',
-        coming_soon=True,
+        report=report,
+        date_iso=rep_date.isoformat(),
+        mo_goal=mo_goal,
+        mtd_actual=mtd_actual,
+        month_label=rep_date.strftime('%b %Y'),
+        workdays=workdays,
+        days_left=days_left,
+        remaining_to_close=remaining_to_close,
+        days_behind=days_behind,
+        missed_days=missed_days,
+        gauge_pct=pct,
+        todays_goal=todays_goal,
+        todays_variance=todays_variance,
+        monthly_variance=monthly_variance,
+        current_page='admin',
+        chart_labels=labels,
+        chart_actual_cum=cum_actuals,
+        chart_goal_cum=goal_cum,
         **_topbar_context()
+
     )
-
-
-# @app.route('/admin/day-end', methods=['GET', 'POST'], endpoint='admin_day_end')
-# @login_required
-# @subscription_required
-# @admin_only
-# def admin_day_end():
-#     if not current_user.is_authenticated or current_user.role != 'admin':
-#         abort(403)
-
-#     shop = get_active_shop(current_user)
-#     if not shop:
-#         flash("No active shop selected.", "error")
-#         return redirect(url_for('index'))
-
-#     # Ensure last month's snapshot exists (if new month)
-#     _ensure_prev_month_snapshot(shop, date.today())
-
-#     # Resolve date for the editor
-#     date_str = request.values.get('date')
-#     try:
-#         rep_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else date.today()
-#     except Exception:
-#         rep_date = date.today()
-
-#     report = DayEndReport.query.filter_by(shop_id=shop.id, report_date=rep_date).first()
-
-#     if request.method == 'POST':
-#         action = request.form.get('action', 'save')
-#         if not report:
-#             report = DayEndReport(shop_id=shop.id, author_id=current_user.id, report_date=rep_date)
-#             db.session.add(report)
-
-#         def as_int(name):
-#             v = (request.form.get(name) or '').replace(',', '').replace('$', '').strip()
-#             try:
-#                 return int(float(v)) if v else 0
-#             except Exception:
-#                 return 0
-
-#         report.status               = 'final' if action == 'finalize' else 'draft'
-#         report.actual_closed        = as_int('actual_closed')
-#         report.tomorrow_close_goal  = as_int('tomorrow_close_goal')
-#         report.daily_gp             = max(0, min(100, as_int('daily_gp')))
-
-#         report.issues         = request.form.get('issues') or ''
-#         report.carryover      = request.form.get('carryover') or ''
-#         report.tomorrow_focus = request.form.get('tomorrow_focus') or ''
-#         report.notes          = request.form.get('notes') or ''
-
-#         db.session.commit()
-#         flash('Day End saved.' if action != 'finalize' else 'Day End saved & finalized.', 'success')
-#         return redirect(url_for('admin_day_end', date=rep_date.isoformat()))
-
-#     # ======= Right-hand metrics / gauge =======
-#     mo_goal = (shop.monthly_goal or 0)
-
-#     from calendar import monthrange
-#     y, m = rep_date.year, rep_date.month
-#     days_in_month = monthrange(y, m)[1]
-
-#     def is_workday(d: date) -> bool:
-#         return d.weekday() < 5  # Mon..Fri
-
-#     month_days = [date(y, m, d) for d in range(1, days_in_month + 1)]
-#     workdays    = sum(1 for d in month_days if is_workday(d))
-#     elapsed_wd  = sum(1 for d in month_days if d <= rep_date and is_workday(d))
-#     days_left   = max(0, workdays - elapsed_wd)
-
-#     daily_goal  = int(round(mo_goal / workdays)) if workdays else 0
-#     target_to_date = daily_goal * elapsed_wd
-
-#     m_start = date(y, m, 1)
-#     m_end   = date(y, m, days_in_month)
-
-#     # --- Build monthly series for chart (cumulative actual vs workday-based goal) ---
-#     # Gather each day's actual_closed for the month
-#     reports = (DayEndReport.query
-#             .filter(DayEndReport.shop_id == shop.id,
-#                     DayEndReport.report_date >= m_start,
-#                     DayEndReport.report_date <= m_end)
-#             .all())
-#     by_date = {r.report_date: (r.actual_closed or 0) for r in reports}
-
-#     labels = []
-#     daily_actuals = []
-#     from calendar import monthrange
-#     days_in_month = monthrange(y, m)[1]
-#     for d in range(1, days_in_month + 1):
-#         dt = date(y, m, d)
-#         labels.append(str(d))
-#         daily_actuals.append(by_date.get(dt, 0))
-
-#     # Cumulative actuals
-#     cum_actuals = []
-#     running = 0
-#     for v in daily_actuals:
-#         running += int(v or 0)
-#         cum_actuals.append(running)
-
-#     # Linear goal based on WORKDAYS only (flat on weekends)
-#     def is_workday(d: date) -> bool:
-#         return d.weekday() < 5  # Mon..Fri
-
-#     goal_cum = []
-#     if workdays > 0:
-#         wd_so_far = 0
-#         for d in range(1, days_in_month + 1):
-#             if is_workday(date(y, m, d)):
-#                 wd_so_far += 1
-#             goal_cum.append(int(round((mo_goal or 0) * (wd_so_far / workdays))))
-#     else:
-#         goal_cum = [0] * days_in_month
-
-
-#     mtd_actual = (db.session.query(func.coalesce(func.sum(DayEndReport.actual_closed), 0))
-#                   .filter(DayEndReport.shop_id == shop.id,
-#                           DayEndReport.report_date >= m_start,
-#                           DayEndReport.report_date <= m_end)
-#                   .scalar()) or 0
-
-#     remaining_to_close = max(0, mo_goal - mtd_actual)
-#     monthly_variance   = mtd_actual - target_to_date
-#     todays_goal        = daily_goal
-#     todays_variance    = (report.actual_closed if report else 0) - todays_goal
-
-#     days_behind = 0
-#     if daily_goal > 0 and mtd_actual < target_to_date:
-#         deficit = target_to_date - mtd_actual
-#         days_behind = (deficit + daily_goal - 1) // daily_goal  # ceil
-
-#     missed_days = (db.session.query(func.count(DayEndReport.id))
-#                    .filter(DayEndReport.shop_id == shop.id,
-#                            DayEndReport.report_date >= m_start,
-#                            DayEndReport.report_date <= rep_date,
-#                            DayEndReport.actual_closed < daily_goal)
-#                    .scalar()) or 0
-
-#     pct = 0 if mo_goal <= 0 else max(0, min(100, int(round(mtd_actual * 100 / mo_goal))))
-
-#     all_shops = Shop.query.order_by(Shop.name).all()
-#     active_shop_id = shop.id
-
-#     return render_template(
-#         'admin_day_end.html',
-#         report=report,
-#         date_iso=rep_date.isoformat(),
-#         mo_goal=mo_goal,
-#         mtd_actual=mtd_actual,
-#         month_label=rep_date.strftime('%b %Y'),
-#         workdays=workdays,
-#         days_left=days_left,
-#         remaining_to_close=remaining_to_close,
-#         days_behind=days_behind,
-#         missed_days=missed_days,
-#         gauge_pct=pct,
-#         todays_goal=todays_goal,
-#         todays_variance=todays_variance,
-#         monthly_variance=monthly_variance,
-#         is_admin=True,
-#         all_shops=all_shops,
-#         active_shop_id=active_shop_id,
-#         shop=shop,
-#         current_page='admin',
-#         chart_labels=labels,
-#         chart_actual_cum=cum_actuals,
-#         chart_goal_cum=goal_cum,
-
-#     )
 
 @app.route('/admin/reports')
 @login_required
