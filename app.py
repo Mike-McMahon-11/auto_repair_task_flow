@@ -2282,7 +2282,6 @@ def archive():
         group_keys=GROUP_KEYS,
         shop_users=shop_users,                # ← filtered users
         available_groups=available_groups,    # ← filtered groups
-        **_topbar_context(),
     )
 
 
