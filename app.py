@@ -2277,11 +2277,12 @@ def archive():
         assignee=assignee,
         shop=shop,
         is_admin=(current_user.role == 'admin'),
-        all_shops=all_shops,
-        active_shop_id=shop.id,
+        # all_shops=all_shops,
+        # active_shop_id=shop.id,
         group_keys=GROUP_KEYS,
         shop_users=shop_users,                # ← filtered users
         available_groups=available_groups,    # ← filtered groups
+        **_topbar_context(),
     )
 
 
