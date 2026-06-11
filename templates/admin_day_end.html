@@ -16,6 +16,7 @@
     </div>
 </div>
 {% else %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -262,7 +263,7 @@
 
     .rightwrap{position:relative; height:100%; display:grid; grid-template-rows:auto 1fr auto; gap:10px}
     .tops{display:flex; justify-content:space-between; align-items:center}
-    .chip{background:#0e1628; border:1px solid var(--line); padding:8px 10px; border-radius:10px; font-weight:800}
+    .chip{background: var(--elev); border:1px solid var(--line); padding:8px 10px; border-radius:10px; font-weight:800}
     .chip .sub{display:block; font-size:11px; color:#a3b2c6; margin-bottom:2px; font-weight:700}
     .chip .val{font-size:18px}
 
@@ -273,7 +274,7 @@
       background: conic-gradient(#22c55e calc(var(--pct) * 1%), #374151 0);
     }
     .gauge::after{
-      content:""; position:absolute; inset:38px; border-radius:50%; background:#111827; border:1px solid var(--line);
+      content:""; position:absolute; inset:38px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
       box-shadow:inset 0 0 20px rgba(0,0,0,.4);
     }
     .center{position:absolute; inset:0; display:grid; place-items:center; text-align:center}
@@ -292,9 +293,9 @@
     .monthpill{background:#0f172a; border:1px solid var(--line); padding:6px 10px; border-radius:10px; font-weight:800; min-width:160px; text-align:center}
 
     .bottom{display:flex; align-items:center; gap:12px; justify-content:space-between}
-    .tile{background:#0e1628; border:1px solid var(--line); padding:10px 12px; border-radius:12px; width:90px; text-align:center}
+    .tile{background: var(--elev); border:1px solid var(--line); padding:10px 12px; border-radius:12px; width:90px; text-align:center}
     .tile .big{font-size:20px; font-weight:900}
-    .remain{flex:1; background:#0e1628; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+    .remain{flex:1; background: var(--elev); border:1px solid var(--line); border-radius:12px; overflow:hidden}
     .remain .hdr{padding:8px 10px; text-align:center; font-weight:900; border-bottom:1px solid var(--line)}
     .remain .amt{padding:8px 10px; background:yellow; color:#111; text-align:center; font-weight:900}
 
@@ -494,6 +495,14 @@
           }
         });
       }
+
+      // Theme bootstrap
+      (function(){
+        const saved = localStorage.getItem('theme');
+        if(saved==='light' || saved==='dark'){
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      })();
 
       // Avatar coloring
       function strHash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
