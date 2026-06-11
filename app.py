@@ -2684,50 +2684,6 @@ def tech_submit_request():
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 
-@app.route('/dev/cleanup-test-shops')
-def cleanup_test_shops():
-    bad_names = ["TEST_SHOP_2", "TEST_SHOP_3"]
-
-    # 1. Find shops to delete
-    bad_shops = Shop.query.filter(Shop.name.in_(bad_names)).all()
-    bad_ids = [s.id for s in bad_shops]
-
-    print("Deleting MonthSnapshot:", bad_names)
-    print("MonthSnapshot Shop IDs:", bad_ids)
-    
-    MonthSnapshot.query.filter(
-        MonthSnapshot.shop_id.in_(bad_ids)
-    ).delete(synchronize_session=False)
-
-    # 2. Safety log
-    print("Deleting shops:", bad_names)
-    print("Shop IDs:", bad_ids)
-
-    # 3. Remove AdminShop links first (IMPORTANT for FK safety)
-    if bad_ids:
-        AdminShop.query.filter(AdminShop.shop_id.in_(bad_ids)) \
-            .delete(synchronize_session=False)
-
-    # 4. Fix any users pointing to deleted shops
-    users = User.query.filter(User.shop_id.in_(bad_ids)).all()
-    keep_shop = Shop.query.filter(Shop.name == "TEST_SHOP").first()
-
-    for u in users:
-        u.shop_id = keep_shop.id
-
-    # 5. Delete shops
-    Shop.query.filter(Shop.id.in_(bad_ids)) \
-        .delete(synchronize_session=False)
-
-    db.session.commit()
-
-    return {
-        "deleted_shops": bad_names,
-        "deleted_ids": bad_ids,
-        "status": "success"
-    }
-
-
 # ---------------- Reports ----------------
 @app.get('/reports')
 @login_required
