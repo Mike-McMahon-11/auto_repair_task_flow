@@ -1172,38 +1172,35 @@ def index():
             self_count += 1
     
     return render_template(
-        'landing.html'
+        'index.html',
+        current_page='requests',
+        tab=tab,
+        tasks=rows,
+        get_role_status=get_role_status,
+        shop=shop,
+        kpi=dict(
+            all_tech=total_tech,
+            remaining=remaining_to_goal,
+            workdays=workdays_left,
+
+            incoming_total=incoming_total,
+            incoming_unread=incoming_unread,
+
+            outgoing_total=outgoing_total,
+            outgoing_unread=0,  # fine for now
+
+            self_total=self_count,
+            self_unread=unread_self
+        ),
+        read_ids=read_ids,
+        roles=ROLES,
+        group_keys=GROUP_KEYS,
+        request_types=REQUEST_TYPES if 'REQUEST_TYPES' in globals() else [],
+        shop_users=shop_users,
+        is_admin=is_admin(current_user),
+        all_shops=all_shops,
+        active_shop_id=shop.id
     )
-    # return render_template(
-    #     'index.html',
-    #     current_page='requests',
-    #     tab=tab,
-    #     tasks=rows,
-    #     get_role_status=get_role_status,
-    #     shop=shop,
-    #     kpi=dict(
-    #         all_tech=total_tech,
-    #         remaining=remaining_to_goal,
-    #         workdays=workdays_left,
-
-    #         incoming_total=incoming_total,
-    #         incoming_unread=incoming_unread,
-
-    #         outgoing_total=outgoing_total,
-    #         outgoing_unread=0,  # fine for now
-
-    #         self_total=self_count,
-    #         self_unread=unread_self
-    #     ),
-    #     read_ids=read_ids,
-    #     roles=ROLES,
-    #     group_keys=GROUP_KEYS,
-    #     request_types=REQUEST_TYPES if 'REQUEST_TYPES' in globals() else [],
-    #     shop_users=shop_users,
-    #     is_admin=is_admin(current_user),
-    #     all_shops=all_shops,
-    #     active_shop_id=shop.id
-    # )
 
 # Create Request
 @app.route('/tasks/create', methods=['POST'])
