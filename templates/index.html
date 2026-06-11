@@ -284,6 +284,27 @@
       border:1px solid var(--line);
       background:var(--surface);
     }
+
+    /* Force select to respect theme */
+    select.input,
+    select {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* Fix dropdown options (important for dark mode) */
+    select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    /* Optional: hover/selected feel in dark mode */
+    select option:checked,
+    select option:hover {
+      background: var(--elev);
+      color: var(--text);
+    }
+
     select.pill {
       width:auto !important;
       font-size:12px !important;
