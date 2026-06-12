@@ -11,7 +11,7 @@
             🚧 Coming Soon
         </h1>
         <p style="color:var(--text-muted); font-size:16px;">
-            Day End reporting is currently being built.
+            Analytics reporting is currently being built.
         </p>
     </div>
 </div>
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>WreckFlow — Day End</title>
+  <title>WreckFlow — Analytics</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -395,7 +395,7 @@
           <button class="dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
           <div class="dropdown-menu" id="adminMenu" role="menu">
             <a href="{{ url_for('admin_daily_updates') }}">Daily Updates</a>
-            <a href="{{ url_for('admin_day_end') }}">Day End</a>
+            <a href="{{ url_for('admin_day_end') }}">Analytics</a>
             <a href="{{ url_for('admin_reports') }}">Reports</a>
             <!--<a href="{{ url_for('admin_vendor_approvals') }}">Vendor Approvals</a>-->
             <a href="{{ url_for('admin_team') }}">Team</a>
@@ -634,7 +634,7 @@
       if (shopSel && shopForm) shopSel.addEventListener('change', () => shopForm.submit());
     });
 
-    // Day End specific scripts
+    // Analytics specific scripts
     function ymd(d){
       const m=(d.getMonth()+1).toString().padStart(2,'0');
       return `${d.getFullYear()}-${m}-01`;
