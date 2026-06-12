@@ -264,6 +264,31 @@
     .chip .sub{display:block; font-size:11px; color:var(--text); margin-bottom:2px; font-weight:700}
     .chip .val{font-size:18px}
 
+    .gauge-box{position:relative; display:grid; place-items:center; padding:10px}
+    .gauge{
+      --pct: {{ gauge_pct }};
+      position:relative; width:360px; height:360px; border-radius:50%;
+      background: conic-gradient(#22c55e calc(var(--pct) * 1%), #374151 0);
+    }
+    .gauge::after{
+      content:""; position:absolute; inset:38px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
+      box-shadow:inset 0 0 20px rgba(0,0,0,.4);
+    }
+    .center{position:absolute; inset:0; display:grid; place-items:center; text-align:center}
+    .center .badge{
+      width:120px; height:120px; border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, #ef4444, #7f1d1d);
+      display:grid; place-items:center; color:#fff; font-weight:900; font-size:34px; box-shadow:0 0 30px rgba(239,68,68,.35) inset;
+      border:2px solid #1f2937;
+    }
+    .center .label{margin-top:8px; font-size:26px; font-weight:900}
+    .center .label small{display:block; font-size:22px}
+
+    .monthbar{margin-top:10px; display:flex; align-items:center; justify-content:center; gap:10px}
+    .monthbtn{width:44px; height:32px; border-radius:999px; background:var(--elev); border:1px solid #3b82f6; color:var(--text); font-weight:900; display:grid; place-items:center; cursor:pointer; box-shadow:0 0 0 1px rgba(59,130,246,.25) inset}
+    .monthbtn:hover{filter:brightness(1.12)}
+    .monthpill{background:var(--surface); border:1px solid var(--line); padding:6px 10px; border-radius:10px; font-weight:800; min-width:160px; text-align:center}
+
     .bottom{display:flex; align-items:center; gap:12px; justify-content:space-between}
     .tile{background: var(--surface); border:1px solid var(--line); padding:10px 12px; border-radius:12px; width:90px; text-align:center}
     .tile .big{font-size:20px; font-weight:900}
@@ -274,95 +299,6 @@
     .ro{margin-top:12px; display:grid; gap:10px}
     .ro .grp{display:grid; gap:6px}
     .ro .grp .input{background: var(--surface); color: var(--text);}
-
-    .analytics-wrap{
-        max-width:1400px;
-        margin:auto;
-        padding:20px;
-        display:flex;
-        flex-direction:column;
-        gap:18px;
-    }
-
-    .page-title{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-    }
-
-    .page-title h1{
-        margin:0;
-        font-size:34px;
-    }
-
-    .kpi-grid{
-        display:grid;
-        grid-template-columns:repeat(5,1fr);
-        gap:16px;
-    }
-
-    .kpi-card{
-        background:var(--surface);
-        border:1px solid var(--line);
-        border-radius:16px;
-        padding:20px;
-    }
-
-    .kpi-label{
-        color:var(--muted);
-        font-size:12px;
-        text-transform:uppercase;
-    }
-
-    .kpi-value{
-        font-size:32px;
-        font-weight:800;
-        margin-top:6px;
-    }
-
-    .analytics-panel{
-        background:var(--surface);
-        border:1px solid var(--line);
-        border-radius:16px;
-        padding:18px;
-    }
-
-    .chart-panel{
-        height:500px;
-    }
-
-    .stats-grid{
-        display:grid;
-        grid-template-columns:repeat(4,1fr);
-        gap:16px;
-    }
-
-    .small-label{
-        color:var(--muted);
-        margin-bottom:8px;
-    }
-
-    .big-stat{
-        font-size:42px;
-        font-weight:900;
-    }
-
-    .report-panel summary{
-        cursor:pointer;
-        font-weight:800;
-        font-size:18px;
-    }
-
-    @media(max-width:1100px){
-
-        .kpi-grid{
-            grid-template-columns:repeat(2,1fr);
-        }
-
-        .stats-grid{
-            grid-template-columns:repeat(2,1fr);
-        }
-    }
 
     @media (max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}}
     @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)} .left-cluster{min-width:160px}}
@@ -441,90 +377,97 @@
     </div>
   </div>
 
-  <main class="analytics-wrap">
+  <main class="wrap">
+    <!-- Day End content unchanged -->
+    <section class="panel">
+      <h3>Daily Reporting</h3>
+      <form method="post" action="{{ url_for('admin_day_end') }}">
+        <label for="date">Report Date</label>
+        <input class="input" id="date" type="date" name="date" value="{{ date_iso }}" />
 
-    <div class="page-title">
-        <h1>Shop Analytics</h1>
-        <span>{{ month_label }}</span>
-    </div>
-
-    <section class="kpi-grid">
-
-        <div class="kpi-card">
-            <div class="kpi-label">MTD Revenue</div>
-            <div class="kpi-value">${{ "{:,}".format(mtd_actual or 0) }}</div>
+        <label for="actual_closed">Actual Closed</label>
+        <div class="affix">
+          <span class="pre">$</span>
+          <input class="input" id="actual_closed" name="actual_closed" type="number" step="1" min="0" placeholder="0" value="{{ report.actual_closed if report else '' }}" />
         </div>
 
-        <div class="kpi-card">
-            <div class="kpi-label">Monthly Goal</div>
-            <div class="kpi-value">${{ "{:,}".format(mo_goal or 0) }}</div>
+        <label for="tomorrow_close_goal">Tomorrow's Close Goal</label>
+        <div class="affix">
+          <span class="pre">$</span>
+          <input class="input" id="tomorrow_close_goal" name="tomorrow_close_goal" type="number" step="1" min="0" placeholder="0" value="{{ report.tomorrow_close_goal if report else '' }}" />
         </div>
 
-        <div class="kpi-card">
-            <div class="kpi-label">Goal Progress</div>
-            <div class="kpi-value">{{ gauge_pct }}%</div>
+        <label for="daily_gp">Daily GP</label>
+        <div class="affix-suf">
+          <input class="input" id="daily_gp" name="daily_gp" type="number" step="1" min="0" max="100" placeholder="0" value="{{ report.daily_gp if report else '' }}" />
+          <span class="suf">%</span>
+        </div>
+        <div class="note">Enter value between 0–100</div>
+
+        <div style="margin-top:12px">
+          <button class="btn primary" type="submit" name="action" value="save" style="width:100%">Submit Report</button>
         </div>
 
-        <div class="kpi-card">
-            <div class="kpi-label">Remaining</div>
-            <div class="kpi-value">${{ "{:,}".format(remaining_to_close or 0) }}</div>
+        <div class="ro">
+          <div class="grp">
+            <label>Today's Goal</label>
+            <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_goal }}" readonly /></div>
+          </div>
+          <div class="grp">
+            <label>Today's Variance</label>
+            <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_variance }}" readonly /></div>
+          </div>
+          <div class="grp">
+            <label>Monthly Variance</label>
+            <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ monthly_variance }}" readonly /></div>
+          </div>
         </div>
-
-        <div class="kpi-card">
-            <div class="kpi-label">Days Left</div>
-            <div class="kpi-value">{{ days_left }}</div>
-        </div>
-
+      </form>
     </section>
 
-    <section class="analytics-panel chart-panel">
-        <div class="panel-header">
-            Revenue Performance
+    <aside class="panel rightwrap">
+      <div class="tops">
+        <div class="chip">
+          <span class="sub">Mo. Close Goal</span>
+          <span class="val">${{ "{:,}".format(mo_goal or 0) }}</span>
         </div>
-
-        <canvas id="progressChart"></canvas>
-    </section>
-
-    <section class="stats-grid">
-
-        <div class="analytics-panel">
-            <div class="small-label">Monthly Variance</div>
-            <div class="big-stat">
-                ${{ "{:,}".format(monthly_variance) }}
-            </div>
+        <div class="chip">
+          <span class="sub">Actual</span>
+          <span class="val">${{ "{:,}".format(mtd_actual or 0) }}</span>
         </div>
+      </div>
 
-        <div class="analytics-panel">
-            <div class="small-label">Days Behind</div>
-            <div class="big-stat">
-                {{ days_behind }}
-            </div>
+      <div class="gauge-box">
+        <div class="gauge"></div>
+        <div class="center">
+          <div>
+            <div class="badge">{{ days_behind }}</div>
+            <div class="label"><small>Days</small>Behind</div>
+          </div>
         </div>
+      </div>
 
-        <div class="analytics-panel">
-            <div class="small-label">Missed Goal Days</div>
-            <div class="big-stat">
-                {{ missed_days }}
-            </div>
+      <div class="monthbar">
+        <button class="monthbtn" type="button" onclick="goMonth(-1)">‹</button>
+        <div class="monthpill" id="monthLabel">{{ month_label }}</div>
+        <button class="monthbtn" type="button" onclick="goMonth(1)">›</button>
+      </div>
+
+      <div class="bottom">
+        <div class="tile"><div style="font-weight:800; color:#a3b2c6">Work Days</div><div class="big">{{ workdays }}</div></div>
+        <div class="remain"><div class="hdr">Remaining to Close</div><div class="amt">${{ "{:,}".format(remaining_to_close or 0) }}</div></div>
+        <div class="tile"><div style="font-weight:800; color:#a3b2c6">Missed</div><div class="big">{{ missed_days }}</div></div>
+        <div class="tile"><div style="font-weight:800; color:#a3b2c6">Days Left</div><div class="big">{{ days_left }}</div></div>
+      </div>
+
+      <section class="panel" style="grid-column:1 / -1; margin-top:8px">
+        <h3 style="margin:0 0 10px">Monthly Progress</h3>
+        <div style="height:320px">
+          <canvas id="progressChart" aria-label="Monthly progress chart" role="img"></canvas>
         </div>
-
-        <div class="analytics-panel">
-            <div class="small-label">Needed Per Day</div>
-            <div class="big-stat">
-                ${{ "{:,}".format((remaining_to_close // days_left) if days_left else 0) }}
-            </div>
-        </div>
-
-    </section>
-
-    <details class="analytics-panel report-panel">
-        <summary>Daily Report Entry</summary>
-
-        <!-- paste your existing form here -->
-
-    </details>
-
-    </main>
+      </section>
+    </aside>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
