@@ -524,7 +524,48 @@
     <details class="analytics-panel report-panel">
         <summary>Daily Report Entry</summary>
 
-        <!-- paste your existing form here -->
+        <form method="post" action="{{ url_for('admin_day_end') }}">
+            <label for="date">Report Date</label>
+            <input class="input" id="date" type="date" name="date" value="{{ date_iso }}" />
+
+            <label for="actual_closed">Actual Closed</label>
+            <div class="affix">
+            <span class="pre">$</span>
+            <input class="input" id="actual_closed" name="actual_closed" type="number" step="1" min="0" placeholder="0" value="{{ report.actual_closed if report else '' }}" />
+            </div>
+
+            <label for="tomorrow_close_goal">Tomorrow's Close Goal</label>
+            <div class="affix">
+            <span class="pre">$</span>
+            <input class="input" id="tomorrow_close_goal" name="tomorrow_close_goal" type="number" step="1" min="0" placeholder="0" value="{{ report.tomorrow_close_goal if report else '' }}" />
+            </div>
+
+            <label for="daily_gp">Daily GP</label>
+            <div class="affix-suf">
+            <input class="input" id="daily_gp" name="daily_gp" type="number" step="1" min="0" max="100" placeholder="0" value="{{ report.daily_gp if report else '' }}" />
+            <span class="suf">%</span>
+            </div>
+            <div class="note">Enter value between 0–100</div>
+
+            <div style="margin-top:12px">
+            <button class="btn primary" type="submit" name="action" value="save" style="width:100%">Submit Report</button>
+            </div>
+
+            <div class="ro">
+            <div class="grp">
+                <label>Today's Goal</label>
+                <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_goal }}" readonly /></div>
+            </div>
+            <div class="grp">
+                <label>Today's Variance</label>
+                <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_variance }}" readonly /></div>
+            </div>
+            <div class="grp">
+                <label>Monthly Variance</label>
+                <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ monthly_variance }}" readonly /></div>
+            </div>
+            </div>
+        </form>
 
     </details>
 
