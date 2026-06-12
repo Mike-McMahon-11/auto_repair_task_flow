@@ -147,6 +147,23 @@
 :root[data-theme="light"] .readpill.is-unread{ background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; border-radius:999px; padding:2px 8px; font-weight:700 }
 :root[data-theme="light"] .readpill.is-read{ background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:999px; padding:2px 8px; font-weight:700 }
 
+.site-footer{
+    text-align:center;
+    margin:30px 0 20px;
+    font-size:13px;
+    color:var(--muted);
+}
+
+.site-footer a{
+    color:var(--muted);
+    text-decoration:none;
+    margin:0 8px;
+}
+
+.site-footer a:hover{
+    text-decoration:underline;
+}
+
 </style>
 </head>
 <body>
@@ -220,5 +237,14 @@
 })();
 
 </script>
+
+  <footer class="site-footer">
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+      <span>•</span>
+      <!-- <a href="{{ url_for('terms') }}">Terms of Service</a>
+      <span>•</span>
+      <a href="{{ url_for('contact') }}">Contact</a> -->
+  </footer>
+
 </body>
 </html>

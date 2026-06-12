@@ -84,7 +84,23 @@
     .btn.primary:hover{ filter:brightness(1.15) }
 
     .footer{ margin-top:14px; text-align:center; color:var(--muted); font-size:12px }
-  
+    
+    .site-footer{
+        text-align:center;
+        margin:30px 0 20px;
+        font-size:13px;
+        color:var(--muted);
+    }
+
+    .site-footer a{
+        color:var(--muted);
+        text-decoration:none;
+        margin:0 8px;
+    }
+
+    .site-footer a:hover{
+        text-decoration:underline;
+    }
 
 
 
@@ -372,6 +388,18 @@
 })();
 
 </script>
+
+
+
+
+  <footer class="site-footer">
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+      <span>•</span>
+      <!-- <a href="{{ url_for('terms') }}">Terms of Service</a>
+      <span>•</span>
+      <a href="{{ url_for('contact') }}">Contact</a> -->
+  </footer>
+
 </body>
 </html>
 

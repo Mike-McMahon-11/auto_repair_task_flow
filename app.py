@@ -2667,6 +2667,10 @@ def tech_submit_request():
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
 # ---------------- Reports ----------------
 @app.get('/reports')
 @login_required
