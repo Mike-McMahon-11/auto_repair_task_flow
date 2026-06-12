@@ -61,6 +61,13 @@
       --chart-text:#334155;
     }
 
+    input[type="date"]{
+        color-scheme: dark;
+    }
+
+    [data-theme="light"] input[type="date"]{
+        color-scheme: light;
+    }
 
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -492,7 +499,7 @@
     <section class="stats-grid">
 
         <div class="analytics-panel">
-            <div class="small-label">Monthly Variance</div>
+            <div class="small-label">Pace Variance</div>
             <div class="big-stat">
                 ${{ "{:,}".format(monthly_variance) }}
             </div>
@@ -551,20 +558,6 @@
             <button class="btn primary" type="submit" name="action" value="save" style="width:100%">Submit Report</button>
             </div>
 
-            <div class="ro">
-            <div class="grp">
-                <label>Today's Goal</label>
-                <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_goal }}" readonly /></div>
-            </div>
-            <div class="grp">
-                <label>Today's Variance</label>
-                <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ todays_variance }}" readonly /></div>
-            </div>
-            <div class="grp">
-                <label>Monthly Variance</label>
-                <div class="affix"><span class="pre">$</span><input class="input" type="text" value="{{ monthly_variance }}" readonly /></div>
-            </div>
-            </div>
         </form>
 
     </details>
@@ -677,43 +670,39 @@
           { label: 'Actual', data: actual, borderColor:'#2563eb', backgroundColor:'#2563eb', borderWidth: 4, tension: 0.3, pointRadius: 2 },
           { label: 'Goal', data: goal, borderWidth: 2, borderDash: [6,6], tension: 0.3, pointRadius: 0, borderColor: '#f59e0b' }
         ]},
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
 
-            plugins: {
-                legend: {
-                labels: {
-                    color: chartText,
-                    font: {
-                    weight: '700'
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: chartText,
+                                font: {
+                                    weight: '700'
+                                }
+                            }
+                        }
+                    },
+
+                    scales: {
+                        x: {
+                            grid: { color: chartGrid },
+                            ticks: { color: chartText }
+                        },
+
+                        y: {
+                            grid: { color: chartGrid },
+                            ticks: {
+                                color: chartText,
+                                callback: (v)=>'$' + v.toLocaleString()
+                            }
+                        }
                     }
-                }
-                }
-            },
+                }   // <-- THIS BRACE IS MISSING
 
-            scales: {
-                x: {
-                grid: {
-                    color: chartGrid
-                },
-                ticks: {
-                    color: chartText
-                }
-                },
-
-                y: {
-                grid: {
-                    color: chartGrid
-                },
-                ticks: {
-                    color: chartText,
-                    callback: (v)=>'$' + v.toLocaleString()
-                }
-                }
-            }
-        });
-    })();
+            });   // Chart closes here
+        })();
     
   </script>
 </body>
