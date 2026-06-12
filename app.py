@@ -533,28 +533,6 @@ def _mark_read(task_id: int, user_id: int):
         db.session.add(TaskRead(task_id=task_id, user_id=user_id, read_at=utcnow()))
         db.session.commit()
 
-@app.post('/shop/revenue')
-@login_required
-def update_shop_revenue():
-    if current_user.role != 'admin':
-        abort(403)
-
-    shop = get_active_shop(current_user)
-
-    val_raw = (request.form.get('revenue') or '').replace(',', '').replace('$', '').strip()
-
-    try:
-        value = max(0, int(float(val_raw)))
-    except Exception:
-        flash('Invalid revenue number.', 'error')
-        return redirect(url_for('index'))
-
-    shop.current_month_revenue = value
-    db.session.commit()
-
-    flash('Revenue updated.')
-    return redirect(url_for('index'))
-
 def _ensure_prev_month_snapshot(shop: Shop, today: date):
     """On/after the first of a new month, archive the previous month's goal/actual once."""
     # Determine previous month
@@ -1074,14 +1052,32 @@ def index():
         Task.deleted_at.is_(None)
     ).count()
   
+    today = date.today()
+    m_start = date(today.year, today.month, 1)
+
+    mtd_revenue = (
+        db.session.query(
+            func.coalesce(func.sum(DayEndReport.actual_closed), 0)
+        )
+        .filter(
+            DayEndReport.shop_id == shop.id,
+            DayEndReport.report_date >= m_start,
+            DayEndReport.report_date <= today
+        )
+        .scalar()
+    ) or 0
+
     remaining_to_goal = max(
-        (shop.monthly_goal or 0) - (shop.current_month_revenue or 0),
+        (shop.monthly_goal or 0) - mtd_revenue,
         0
     )
 
     progress_pct = 0
     if shop.monthly_goal:
-        progress_pct = int((shop.current_month_revenue / shop.monthly_goal) * 100)
+        progress_pct = int(
+            (mtd_revenue / shop.monthly_goal) * 100
+        )
+
     
     daily_target = 0
 
