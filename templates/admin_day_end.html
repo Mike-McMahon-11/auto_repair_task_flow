@@ -28,7 +28,8 @@
       --bg:#0a0f1c; --brand:#111827; --surface:#0f172a; --elev:#0b1220; --line:#1f2937;
       --text:#e5e7eb; --muted:#a3b2c6; --accent:#6d28d9; --accent2:#3b82f6;
       --good:#10b981; --warn:#f59e0b; --bad:#ef4444; --dark:#0b1220;
-      --chip:#0b1220; --chip-border:#334155;
+      --chip:#0b1220; --chip-border:#334155; --chart-grid:#334155;
+      --chart-text:#cbd5e1;
     }
 
      [data-theme="light"] {
@@ -55,6 +56,9 @@
       --chip:#ffffff;
       --chip-border:#e2e8f0;
       --sla-gray:#e5e7eb;
+
+      --chart-grid:#d1d5db;
+      --chart-text:#334155;
     }
 
 
@@ -616,22 +620,60 @@
       const goal   = {{ chart_goal_cum|tojson }};
       const canvas = document.getElementById('progressChart');
       if (!canvas) return;
+
+      const css = getComputedStyle(document.documentElement);
+
+      const chartGrid =
+      css.getPropertyValue('--chart-grid').trim();
+
+      const chartText =
+      css.getPropertyValue('--chart-text').trim();
+
+
       new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: { labels, datasets: [
-          { label: 'Actual', data: actual, borderWidth: 2, tension: 0.3, pointRadius: 0 },
+          { label: 'Actual', data: actual, borderColor:'#2563eb', backgroundColor:'#2563eb', borderWidth: 4, tension: 0.3, pointRadius: 2 },
           { label: 'Goal', data: goal, borderWidth: 2, borderDash: [6,6], tension: 0.3, pointRadius: 0, borderColor: '#f59e0b' }
         ]},
         options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#cbd5e1', font: { weight: '700' } } } },
-          scales: {
-            x: { grid: { color: '#1f2937' }, ticks: { color: '#cbd5e1' } },
-            y: { grid: { color: '#1f2937' }, ticks: { color: '#cbd5e1', callback: (v)=>'$' + v.toLocaleString() } }
-          }
-        }
-      });
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                labels: {
+                    color: chartText,
+                    font: {
+                    weight: '700'
+                    }
+                }
+                }
+            },
+
+            scales: {
+                x: {
+                grid: {
+                    color: chartGrid
+                },
+                ticks: {
+                    color: chartText
+                }
+                },
+
+                y: {
+                grid: {
+                    color: chartGrid
+                },
+                ticks: {
+                    color: chartText,
+                    callback: (v)=>'$' + v.toLocaleString()
+                }
+                }
+            }
+        });
     })();
+    
   </script>
 </body>
 </html>
