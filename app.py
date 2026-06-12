@@ -820,7 +820,6 @@ ROLES = [
 #     return render_template('register_shop.html')
 
 @app.route('/register_shop', methods=['GET','POST'])
-@login_required
 def register_shop():
     if current_user.role != 'admin':
         abort(403)
@@ -2665,11 +2664,6 @@ def tech_submit_request():
         db.session.rollback()
         print("tech_submit_request error:", e)
         return jsonify({'ok': False, 'error': str(e)}), 500
-
-
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
 
 # ---------------- Reports ----------------
 @app.get('/reports')
