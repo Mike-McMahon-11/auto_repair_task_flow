@@ -377,6 +377,205 @@
     </div>
   </div>
 
+  <!-- Analytics Dashboard Section -->
+
+  <div class="analytics-dashboard">
+
+  ```
+  <!-- KPI ROW -->
+  <div class="kpi-grid">
+
+      <div class="kpi-card">
+          <div class="kpi-label">MTD Revenue</div>
+          <div class="kpi-value">${{ "{:,.0f}".format(mtd_actual) }}</div>
+      </div>
+
+      <div class="kpi-card">
+          <div class="kpi-label">Monthly Goal</div>
+          <div class="kpi-value">${{ "{:,.0f}".format(monthly_goal) }}</div>
+      </div>
+
+      <div class="kpi-card">
+          <div class="kpi-label">Goal Pace</div>
+          <div class="kpi-value">{{ pct_goal }}%</div>
+      </div>
+
+      <div class="kpi-card">
+          <div class="kpi-label">Days Behind</div>
+          <div class="kpi-value">{{ days_behind }}</div>
+      </div>
+
+  </div>
+
+  <!-- MAIN CHART -->
+
+  <div class="panel">
+
+      <div class="panel-title">
+          Revenue vs Goal
+      </div>
+
+      <canvas id="revenueChart"></canvas>
+
+  </div>
+
+  <!-- SECOND ROW -->
+
+  <div class="two-column">
+
+      <div class="panel">
+
+          <div class="panel-title">
+              Shop Performance
+          </div>
+
+          <div class="score-row">
+              <span>Monthly Variance</span>
+              <strong>${{ "{:,.0f}".format(month_variance) }}</strong>
+          </div>
+
+          <div class="score-row">
+              <span>Today's Variance</span>
+              <strong>${{ "{:,.0f}".format(today_variance) }}</strong>
+          </div>
+
+          <div class="score-row">
+              <span>Missed Goal Days</span>
+              <strong>{{ missed_days }}</strong>
+          </div>
+
+          <div class="score-row">
+              <span>Days Remaining</span>
+              <strong>{{ days_left }}</strong>
+          </div>
+
+      </div>
+
+      <div class="panel">
+
+          <div class="panel-title">
+              Manager Notes
+          </div>
+
+          <textarea
+              placeholder="Key issues, staffing concerns, supplements, parts delays..."
+              style="
+                  width:100%;
+                  min-height:180px;
+                  resize:vertical;
+              "
+          ></textarea>
+
+      </div>
+
+  </div>
+
+  </div>
+
+  <style>
+
+  .analytics-dashboard {
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+  }
+
+  .kpi-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:16px;
+  }
+
+  .kpi-card {
+      background:var(--card-bg);
+      border:1px solid var(--border-color);
+      border-radius:14px;
+      padding:20px;
+  }
+
+  .kpi-label {
+      color:var(--text-muted);
+      font-size:13px;
+  }
+
+  .kpi-value {
+      font-size:32px;
+      font-weight:700;
+      margin-top:8px;
+  }
+
+  .panel {
+      background:var(--card-bg);
+      border:1px solid var(--border-color);
+      border-radius:14px;
+      padding:20px;
+  }
+
+  .panel-title {
+      font-size:18px;
+      font-weight:700;
+      margin-bottom:20px;
+  }
+
+  .two-column {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+  }
+
+  .score-row {
+      display:flex;
+      justify-content:space-between;
+      padding:14px 0;
+      border-bottom:1px solid var(--border-color);
+  }
+
+  #revenueChart {
+      height:350px !important;
+  }
+
+  @media (max-width:900px) {
+
+      .two-column {
+          grid-template-columns:1fr;
+      }
+
+  }
+
+  </style>
+
+  <script>
+
+  new Chart(
+      document.getElementById('revenueChart'),
+      {
+          type:'line',
+          data:{
+              labels: {{ chart_labels|tojson }},
+              datasets:[
+                  {
+                      label:'Actual Revenue',
+                      data: {{ chart_actual_cum|tojson }},
+                      tension:0.3
+                  },
+                  {
+                      label:'Goal Pace',
+                      data: {{ chart_goal_cum|tojson }},
+                      tension:0.3
+                  }
+              ]
+          },
+          options:{
+              responsive:true,
+              maintainAspectRatio:false
+          }
+      }
+  );
+
+  </script>
+
+
+
   <main class="wrap">
     <!-- Day End content unchanged -->
     <section class="panel">
