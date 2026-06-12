@@ -799,58 +799,58 @@ ROLES = [
     ('porter', 'Porter'),
 ]
 
-# @app.route('/register_shop', methods=['GET','POST'])
-# @login_required
-# def register_shop():
-#     if request.method == 'POST':
-#         name = request.form['name'].strip()
-#         goal = request.form.get('goal', type=int) or 100
-#         if not name:
-#             flash('Shop name required.')
-#             return render_template('register_shop.html')
-#         s = Shop(name=name, monthly_goal=goal)
-#         db.session.add(s); db.session.commit()
-#         db.session.add(AdminShop(
-#             admin_user_id=current_user.id,
-#             shop_id=s.id
-#         ))
-#         db.session.commit()
-#         flash('Shop registered. Create a user next.')
-#         return redirect(url_for('create_user', shop_id=s.id))
-#     return render_template('register_shop.html')
-
 @app.route('/register_shop', methods=['GET','POST'])
+@login_required
 def register_shop():
-    if current_user.role != 'admin':
-        abort(403)
-
     if request.method == 'POST':
         name = request.form['name'].strip()
         goal = request.form.get('goal', type=int) or 100
-
         if not name:
             flash('Shop name required.')
             return render_template('register_shop.html')
-
-        # 🔥 Create shop
         s = Shop(name=name, monthly_goal=goal)
-        db.session.add(s)
-        db.session.commit()
-
-        # 🔥 Link admin to this shop
+        db.session.add(s); db.session.commit()
         db.session.add(AdminShop(
             admin_user_id=current_user.id,
             shop_id=s.id
         ))
         db.session.commit()
-
-        # 🔥 Switch to it immediately
-        session['active_shop_id'] = s.id
-
-        flash('New shop created successfully')
-        return redirect(url_for('index'))
-
+        flash('Shop registered. Create a user next.')
+        return redirect(url_for('create_user', shop_id=s.id))
     return render_template('register_shop.html')
+
+# @app.route('/register_shop', methods=['GET','POST'])
+# def register_shop():
+#     if current_user.role != 'admin':
+#         abort(403)
+
+#     if request.method == 'POST':
+#         name = request.form['name'].strip()
+#         goal = request.form.get('goal', type=int) or 100
+
+#         if not name:
+#             flash('Shop name required.')
+#             return render_template('register_shop.html')
+
+#         # 🔥 Create shop
+#         s = Shop(name=name, monthly_goal=goal)
+#         db.session.add(s)
+#         db.session.commit()
+
+#         # 🔥 Link admin to this shop
+#         db.session.add(AdminShop(
+#             admin_user_id=current_user.id,
+#             shop_id=s.id
+#         ))
+#         db.session.commit()
+
+#         # 🔥 Switch to it immediately
+#         session['active_shop_id'] = s.id
+
+#         flash('New shop created successfully')
+#         return redirect(url_for('index'))
+
+#     return render_template('register_shop.html')
 
 @app.route('/create_user', methods=['GET','POST'])
 @login_required
