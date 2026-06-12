@@ -388,9 +388,9 @@
       <div class="logo" aria-label="WreckFlow">WreckFlow</div>
       <nav class="tabs-top" aria-label="Primary">
         <a class="tab-top {{ 'active' if current_page=='requests' else '' }}" href="{{ url_for('index') }}">Requests</a>
-        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
-
+        
         {% if is_admin %}
+        <a class="tab-top {{ 'active' if current_page=='archive' else '' }}" href="{{ url_for('archive') }}">Archive</a>
         <div class="tab-top dropdown" id="adminDropdown">
           <button class="dropdown-btn" id="adminBtn" aria-haspopup="true" aria-expanded="false" aria-controls="adminMenu">Admin ▾</button>
           <div class="dropdown-menu" id="adminMenu" role="menu">
