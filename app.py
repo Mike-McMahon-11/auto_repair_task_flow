@@ -800,7 +800,6 @@ ROLES = [
 ]
 
 @app.route('/register_shop', methods=['GET','POST'])
-@login_required
 def register_shop():
     if request.method == 'POST':
         name = request.form['name'].strip()
