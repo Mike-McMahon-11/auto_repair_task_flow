@@ -2125,6 +2125,7 @@ def reopen_task(task_id: int):
 
 @app.route('/archive')
 @login_required
+@admin_only
 def archive():
 
     _purge_completed_older_than(app.config['ARCHIVE_RETENTION_DAYS'])
